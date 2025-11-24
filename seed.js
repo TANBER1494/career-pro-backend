@@ -1,7 +1,7 @@
 const mongoose = require("mongoose");
 const dotenv = require("dotenv");
 
-// Import All Models
+// Import All 15 Models
 const Authentication = require("./models/Authentication");
 const AuthToken = require("./models/AuthToken");
 const UserSession = require("./models/UserSession");
@@ -10,7 +10,7 @@ const Company = require("./models/Company");
 const Skill = require("./models/Skill");
 const Job = require("./models/Job");
 const JobSkill = require("./models/JobSkill");
-const SeekerSkill = require("./models/SeekerSkill"); // ✅ Added
+const SeekerSkill = require("./models/SeekerSkill");
 const JobApplication = require("./models/JobApplication");
 const JobRecommendation = require("./models/JobRecommendation");
 const CompanyVerificationDocument = require("./models/CompanyVerificationDocument");
@@ -24,7 +24,7 @@ mongoose
 
 const seedDatabase = async () => {
   try {
-    // 1. CLEANUP: Delete ALL existing data
+    // 1. CLEANUP: Delete ALL existing data (15 Tables)
     await Promise.all([
       Authentication.deleteMany(),
       AuthToken.deleteMany(),
@@ -34,12 +34,12 @@ const seedDatabase = async () => {
       Skill.deleteMany(),
       Job.deleteMany(),
       JobSkill.deleteMany(),
-      SeekerSkill.deleteMany(), // ✅ Added cleanup
+      SeekerSkill.deleteMany(),
       JobApplication.deleteMany(),
       JobRecommendation.deleteMany(),
       CompanyVerificationDocument.deleteMany(),
     ]);
-    console.log("🧹 Database Cleaned.");
+    console.log("-- Database Cleaned (15 Tables).");
 
     // 2. CREATE USERS (Auth)
     const [adminAuth, companyAuth, seekerAuth] = await Promise.all([
@@ -62,7 +62,7 @@ const seedDatabase = async () => {
         isVerified: true,
       }),
     ]);
-    console.log("👤 Auth Users Created.");
+    console.log("-- Auth Users Created.");
 
     // 3. CREATE PROFILES
     const company = await Company.create({
@@ -80,23 +80,23 @@ const seedDatabase = async () => {
       location: "Alexandria",
       yearsOfExperience: 3,
     });
-    console.log("📂 Profiles Created.");
+    console.log("-- Profiles Created.");
 
     // 4. CREATE SKILLS
     const [reactSkill, nodeSkill] = await Promise.all([
       Skill.create({ name: "React.js", category: "technical" }),
       Skill.create({ name: "Node.js", category: "technical" }),
     ]);
-    console.log("🧠 Skills Created.");
+    console.log("-- Skills Created.");
 
-    // 5. ASSIGN SKILLS TO SEEKER (✅ NEW STEP)
+    // 5. ASSIGN SKILLS TO SEEKER
     await SeekerSkill.create({
       seekerId: seeker._id,
       skillId: reactSkill._id,
       proficiency: "advanced",
       yearsOfExperience: 3,
     });
-    console.log("🧑‍💻 Seeker Skills Assigned.");
+    console.log("-- Seeker Skills Assigned.");
 
     // 6. CREATE JOB & LINK SKILLS
     const job = await Job.create({
@@ -116,7 +116,7 @@ const seedDatabase = async () => {
       skillId: reactSkill._id,
       requiredProficiency: "expert",
     });
-    console.log("💼 Job Posted & Skills Linked.");
+    console.log("-- Job Posted & Skills Linked.");
 
     // 7. CREATE APPLICATION
     await JobApplication.create({
@@ -125,7 +125,7 @@ const seedDatabase = async () => {
       resumeUrl: "/uploads/cvs/ahmed.pdf",
       status: "submitted",
     });
-    console.log("📝 Job Application Submitted.");
+    console.log("-- Job Application Submitted.");
 
     // 8. CREATE RECOMMENDATION
     await JobRecommendation.create({
@@ -134,7 +134,7 @@ const seedDatabase = async () => {
       matchPercentage: 92,
       recommendationSource: "ai_job_matching",
     });
-    console.log("🤖 Recommendation Generated.");
+    console.log("-- Recommendation Generated.");
 
     // 9. COMPANY VERIFICATION DOC
     await CompanyVerificationDocument.create({
@@ -145,12 +145,12 @@ const seedDatabase = async () => {
       fileSize: 5000,
       verificationStatus: "pending",
     });
-    console.log("wd Document Uploaded.");
+    console.log("-- Wd Document Uploaded.");
 
     console.log("✅ FULL SYSTEM SEED COMPLETED SUCCESSFULLY!");
     process.exit();
   } catch (err) {
-    console.error("Seeding Error:", err.message);
+    console.error("❌ Seeding Error:", err.message);
     process.exit(1);
   }
 };
