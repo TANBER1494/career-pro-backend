@@ -147,10 +147,10 @@ const seedDatabase = async () => {
     });
     console.log("wd Document Uploaded.");
 
-    console.log("✅FULL SYSTEM SEED COMPLETED SUCCESSFULLY!");
+    console.log("✅ FULL SYSTEM SEED COMPLETED SUCCESSFULLY!");
     process.exit();
   } catch (err) {
-    console.error("❌ Seeding Error:", err.message);
+    console.error("Seeding Error:", err.message);
     process.exit(1);
   }
 };
