@@ -1,6 +1,5 @@
 const express = require("express");
 const jobSeekerController = require("../controllers/jobSeekerController");
-const applicationController = require("../controllers/applicationController");
 const authController = require("../controllers/authController");
 const upload = require("../utils/fileUpload");
 
@@ -18,16 +17,5 @@ router.post(
   upload.single("cvFile"),
   jobSeekerController.uploadCV
 );
-
-// --- Application Routes ---
-// Apply: POST /api/v1/job-seeker/jobs/:jobId/apply
-router.post(
-  "/jobs/:jobId/apply",
-  upload.single("resume"),
-  applicationController.applyForJob
-);
-
-// Save Job: POST /api/v1/job-seeker/jobs/:jobId/save
-router.post("/jobs/:jobId/save", applicationController.toggleSaveJob);
 
 module.exports = router;
