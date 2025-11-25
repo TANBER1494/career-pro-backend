@@ -9,6 +9,14 @@ const jobSeekerSchema = new mongoose.Schema(
       required: [true, "Auth ID is required"],
       unique: true, // Ensures one profile per user
     },
+
+    savedJobs: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Job",
+      },
+    ],
+
     fullName: {
       type: String,
       required: [true, "Full name is required"],

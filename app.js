@@ -2,7 +2,10 @@ const express = require("express");
 const morgan = require("morgan");
 const cors = require("cors");
 const AppError = require("./utils/AppError");
+
+// Import Routes
 const authRouter = require("./routes/authRoutes");
+const jobSeekerRouter = require("./routes/jobSeekerRoutes");
 
 const app = express();
 
@@ -13,8 +16,9 @@ if (process.env.NODE_ENV === "development") {
 app.use(cors());
 app.use(express.json());
 
-// Routes
+// Routes Mounting
 app.use("/api/v1/auth", authRouter);
+app.use("/api/v1/job-seeker", jobSeekerRouter);
 
 // 404 Handler
 app.all(/(.*)/, (req, res, next) => {
