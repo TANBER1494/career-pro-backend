@@ -8,12 +8,8 @@ const jobSchema = new mongoose.Schema(
       ref: "Company",
       required: [true, "Job must belong to a company"],
     },
-    // Link to Learning Path (Optional - assigned by AI later)
-    learningPathId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "LearningPath",
-      required: false,
-    },
+
+    // Basic Info
     title: {
       type: String,
       required: [true, "Job title is required"],
@@ -24,6 +20,7 @@ const jobSchema = new mongoose.Schema(
       required: [true, "Job location is required"],
       trim: true,
     },
+
     // Job Classification
     type: {
       type: String,
@@ -40,6 +37,7 @@ const jobSchema = new mongoose.Schema(
       enum: ["Entry-level", "Mid-level", "Senior-level", "Executive"],
       required: [true, "Experience level is required"],
     },
+
     // Job Details
     description: {
       type: String,
@@ -80,11 +78,10 @@ const jobSchema = new mongoose.Schema(
 );
 
 // Indexes for search performance
-jobSchema.index({ title: "text", description: "text" }); // Text index for search
+jobSchema.index({ title: "text", description: "text" });
 jobSchema.index({ location: 1 });
 jobSchema.index({ type: 1 });
 jobSchema.index({ status: 1 });
-jobSchema.index({ salaryMin: 1, salaryMax: 1 });
 
 const Job = mongoose.model("Job", jobSchema);
 

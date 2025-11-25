@@ -14,11 +14,10 @@ const jobRecommendationSchema = new mongoose.Schema(
       ref: "Job",
       required: [true, "Job ID is required"],
     },
-    // Link to the specific AI request that generated this (for tracking/debugging)
+    // Link to the specific AI request (Optional)
     analysisRequestId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "AiAnalysisRequest",
-      // Not strictly required, but good for audit trails
     },
 
     // Recommendation Details
@@ -30,13 +29,14 @@ const jobRecommendationSchema = new mongoose.Schema(
     },
     // Why was this job recommended? (AI Explanation)
     explanations: {
-      type: Map, // Flexible JSON structure
+      type: Map, // Flexible JSON structure for AI reasoning
       of: String,
     },
+    // Updated Enums based on AI team agreement
     recommendationSource: {
       type: String,
-      enum: ["ai_job_matching", "skill_assessment", "cv_analyzer", "combined"],
-      required: [true, "Source is required"],
+      enum: ["profile_matching", "cv_matching"],
+      required: [true, "Recommendation source is required"],
     },
 
     isViewed: {
@@ -53,8 +53,7 @@ const jobRecommendationSchema = new mongoose.Schema(
   }
 );
 
-// Index to quickly find top matches for a user
-// Compound index: Find recommendations for a user, sorted by match score (descending)
+// Compound index: Find recommendations for a user, sorted by match score
 jobRecommendationSchema.index({ seekerId: 1, matchPercentage: -1 });
 
 const JobRecommendation = mongoose.model(
