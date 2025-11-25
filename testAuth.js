@@ -1,8 +1,8 @@
 const mongoose = require("mongoose");
 const dotenv = require("dotenv");
 const Authentication = require("./models/Authentication");
-const Company = require("./models/Company");
-const CompanyVerificationDocument = require("./models/CompanyVerificationDocument");
+const JobSeeker = require("./models/JobSeeker");
+const AiAnalysisRequest = require("./models/AiAnalysisRequest");
 
 dotenv.config({ path: "./.env" });
 
@@ -11,62 +11,69 @@ mongoose
   .then(() => console.log("DB connection successful!"))
   .catch((err) => console.log("DB Connection Error:", err));
 
-const testVerificationFlow = async () => {
+const testAiFlow = async () => {
   try {
-    // 1. Setup: Create Company and Admin
-    // A. Company
-    const companyAuth = await Authentication.create({
-      email: "company_verif@test.com",
+    // 1. Setup Seeker
+    const authUser = await Authentication.create({
+      email: "ai_logger@example.com",
       password: "password123",
-      accountType: "company",
+      accountType: "job_seeker",
     });
-    const company = await Company.create({
-      authId: companyAuth._id,
-      companyName: "Verif Me Please",
-      companySize: "1-10",
+    const seeker = await JobSeeker.create({
+      authId: authUser._id,
+      fullName: "Neo Anderson",
+      jobTitle: "The One",
     });
+    console.log("1. Seeker Created:", seeker.fullName);
 
-    // B. Admin
-    const adminAuth = await Authentication.create({
-      email: "admin@test.com",
-      password: "password123",
-      accountType: "admin",
-    });
-
-    console.log("1. Company & Admin Created.");
-
-    // 2. Company uploads a document
-    const doc = await CompanyVerificationDocument.create({
-      companyId: company._id,
-      documentType: "business_registration_certificate",
-      fileName: "reg_cert.pdf",
-      filePath: "/uploads/docs/reg_cert.pdf",
-      fileType: "pdf",
-      fileSize: 102400, // 100KB
+    // 2. Create Analysis Request (Simulating sending data to AI)
+    const request = await AiAnalysisRequest.create({
+      seekerId: seeker._id,
+      requestStatus: "pending",
+      requestData: {
+        action: "analyze_cv",
+        file_path: "/uploads/cvs/matrix.pdf",
+        parameters: { detailed: true },
+      },
     });
 
-    console.log("2. Document Uploaded (Pending):", doc.verificationStatus);
+    console.log("2. Request Created (Pending):");
+    console.log({ id: request._id, status: request.requestStatus });
 
-    // 3. Admin reviews and approves the document
-    doc.verificationStatus = "approved";
-    doc.reviewedBy = adminAuth._id;
-    doc.reviewedAt = Date.now();
-    await doc.save();
+    // 3. Simulate AI Processing & Completion
+    // Update to processing
+    await AiAnalysisRequest.findByIdAndUpdate(request._id, {
+      requestStatus: "processing",
+    });
 
-    console.log("3. Document Reviewed & Approved:");
+    // Simulate completion after 1 second
+    const aiResponse = {
+      success: true,
+      score: 99,
+      skills_detected: ["Kung Fu", "Hacking", "Flying"],
+    };
+
+    const completedRequest = await AiAnalysisRequest.findByIdAndUpdate(
+      request._id,
+      {
+        requestStatus: "completed",
+        responseData: aiResponse,
+        processedAt: Date.now(),
+      },
+      { new: true }
+    );
+
+    console.log("3. Request Completed & Logged:");
     console.log({
-      docId: doc._id,
-      status: doc.verificationStatus,
-      reviewer: doc.reviewedBy,
-      reviewedAt: doc.reviewedAt,
+      status: completedRequest.requestStatus,
+      response: completedRequest.responseData,
+      time: completedRequest.processedAt,
     });
 
     // Cleanup
-    await CompanyVerificationDocument.deleteOne({ _id: doc._id });
-    await Company.deleteOne({ _id: company._id });
-    await Authentication.deleteMany({
-      _id: { $in: [companyAuth._id, adminAuth._id] },
-    });
+    await AiAnalysisRequest.deleteOne({ _id: request._id });
+    await JobSeeker.deleteOne({ _id: seeker._id });
+    await Authentication.deleteOne({ _id: authUser._id });
 
     console.log("4. Cleanup complete.");
     process.exit();
@@ -76,4 +83,4 @@ const testVerificationFlow = async () => {
   }
 };
 
-testVerificationFlow();
+testAiFlow();

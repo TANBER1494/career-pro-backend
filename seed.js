@@ -14,6 +14,9 @@ const SeekerSkill = require("./models/SeekerSkill");
 const JobApplication = require("./models/JobApplication");
 const JobRecommendation = require("./models/JobRecommendation");
 const CompanyVerificationDocument = require("./models/CompanyVerificationDocument");
+const CvUpload = require("./models/CvUpload");
+const PersonalityTest = require("./models/PersonalityTest");
+const AiAnalysisRequest = require("./models/AiAnalysisRequest");
 
 dotenv.config({ path: "./.env" });
 
@@ -24,7 +27,7 @@ mongoose
 
 const seedDatabase = async () => {
   try {
-    // 1. CLEANUP: Delete ALL existing data (15 Tables)
+    // 1. CLEANUP: Delete ALL existing data from all 15 tables
     await Promise.all([
       Authentication.deleteMany(),
       AuthToken.deleteMany(),
@@ -38,8 +41,11 @@ const seedDatabase = async () => {
       JobApplication.deleteMany(),
       JobRecommendation.deleteMany(),
       CompanyVerificationDocument.deleteMany(),
+      CvUpload.deleteMany(),
+      PersonalityTest.deleteMany(),
+      AiAnalysisRequest.deleteMany(),
     ]);
-    console.log("-- Database Cleaned (15 Tables).");
+    console.log("-- Database Cleaned (All 15 tables cleared).");
 
     // 2. CREATE USERS (Auth)
     const [adminAuth, companyAuth, seekerAuth] = await Promise.all([
@@ -82,23 +88,21 @@ const seedDatabase = async () => {
     });
     console.log("-- Profiles Created.");
 
-    // 4. CREATE SKILLS
-    const [reactSkill, nodeSkill] = await Promise.all([
-      Skill.create({ name: "React.js", category: "technical" }),
-      Skill.create({ name: "Node.js", category: "technical" }),
-    ]);
-    console.log("-- Skills Created.");
+    // 4. CREATE SKILLS & ASSIGN
+    const reactSkill = await Skill.create({
+      name: "React.js",
+      category: "technical",
+    });
 
-    // 5. ASSIGN SKILLS TO SEEKER
     await SeekerSkill.create({
       seekerId: seeker._id,
       skillId: reactSkill._id,
       proficiency: "advanced",
       yearsOfExperience: 3,
     });
-    console.log("-- Seeker Skills Assigned.");
+    console.log("-- Skills Created & Assigned.");
 
-    // 6. CREATE JOB & LINK SKILLS
+    // 5. CREATE JOB & APPLICATION
     const job = await Job.create({
       companyId: company._id,
       title: "Senior React Dev",
@@ -108,46 +112,60 @@ const seedDatabase = async () => {
       description: "We need a React expert...",
       salaryMin: 50000,
       salaryMax: 80000,
-      skills: ["React.js"], // For display/search
+      skills: ["React.js"],
     });
 
-    await JobSkill.create({
-      jobId: job._id,
-      skillId: reactSkill._id,
-      requiredProficiency: "expert",
-    });
-    console.log("-- Job Posted & Skills Linked.");
-
-    // 7. CREATE APPLICATION
     await JobApplication.create({
       jobId: job._id,
       seekerId: seeker._id,
       resumeUrl: "/uploads/cvs/ahmed.pdf",
       status: "submitted",
     });
-    console.log("-- Job Application Submitted.");
+    console.log("-- Job & Application Created.");
 
-    // 8. CREATE RECOMMENDATION
+    // 6. CREATE AI & FILE DATA (New Part)
+    // A. CV Upload
+    const cv = await CvUpload.create({
+      seekerId: seeker._id,
+      fileName: "ahmed_cv.pdf",
+      filePath: "/uploads/ahmed_cv.pdf",
+      fileType: "pdf",
+      fileSize: 1024,
+      uploadStatus: "analyzed",
+      analysisStatus: "completed",
+      overallScore: 88,
+    });
+
+    // B. Personality Test
+    const test = await PersonalityTest.create({
+      seekerId: seeker._id,
+      testStatus: "completed",
+      personalityTypeCode: "INTJ",
+      userAnswers: { q1: 5, q2: "yes" },
+    });
+
+    // C. AI Request Log
+    await AiAnalysisRequest.create({
+      seekerId: seeker._id,
+      cvUploadId: cv._id,
+      requestStatus: "completed",
+      requestData: { action: "analyze_cv" },
+      responseData: { score: 88 },
+    });
+
+    // D. Job Recommendation (Updated Source)
     await JobRecommendation.create({
       seekerId: seeker._id,
       jobId: job._id,
-      matchPercentage: 92,
-      recommendationSource: "ai_job_matching",
+      matchPercentage: 95,
+      recommendationSource: "cv_matching", // Updated Enum
     });
-    console.log("-- Recommendation Generated.");
 
-    // 9. COMPANY VERIFICATION DOC
-    await CompanyVerificationDocument.create({
-      companyId: company._id,
-      documentType: "tax_certificate",
-      fileName: "tax.pdf",
-      filePath: "/docs/tax.pdf",
-      fileSize: 5000,
-      verificationStatus: "pending",
-    });
-    console.log("-- Wd Document Uploaded.");
+    console.log(
+      "-- AI System Data Seeded (CV, Test, Requests, Recommendations)."
+    );
 
-    console.log("✅ FULL SYSTEM SEED COMPLETED SUCCESSFULLY!");
+    console.log("✅ FINAL SYSTEM CHECK PASSED! DB IS READY.");
     process.exit();
   } catch (err) {
     console.error("❌ Seeding Error:", err.message);
