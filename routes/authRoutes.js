@@ -5,6 +5,7 @@ const router = express.Router();
 
 router.post("/signup", authController.signup);
 router.post("/login", authController.login);
+router.post("/verify-email", authController.verifyEmail);
 
 // Test Protected Route
 router.get("/test-protect", authController.protect, (req, res) => {
@@ -14,5 +15,8 @@ router.get("/test-protect", authController.protect, (req, res) => {
     user: req.user,
   });
 });
+
+router.use(authController.protect);
+router.get("/me", authController.getMe);
 
 module.exports = router;
