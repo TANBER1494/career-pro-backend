@@ -45,7 +45,7 @@ const seedDatabase = async () => {
       PersonalityTest.deleteMany(),
       AiAnalysisRequest.deleteMany(),
     ]);
-    console.log("-- Database Cleaned (All 15 tables cleared).");
+    console.log("🧹 Database Cleaned (All 15 tables cleared).");
 
     // 2. CREATE USERS (Auth)
     const [adminAuth, companyAuth, seekerAuth] = await Promise.all([
@@ -68,7 +68,7 @@ const seedDatabase = async () => {
         isVerified: true,
       }),
     ]);
-    console.log("-- Auth Users Created.");
+    console.log("👤 Auth Users Created.");
 
     // 3. CREATE PROFILES
     const company = await Company.create({
@@ -86,7 +86,7 @@ const seedDatabase = async () => {
       location: "Alexandria",
       yearsOfExperience: 3,
     });
-    console.log("-- Profiles Created.");
+    console.log("📂 Profiles Created.");
 
     // 4. CREATE SKILLS & ASSIGN
     const reactSkill = await Skill.create({
@@ -100,7 +100,7 @@ const seedDatabase = async () => {
       proficiency: "advanced",
       yearsOfExperience: 3,
     });
-    console.log("-- Skills Created & Assigned.");
+    console.log("🧠 Skills Created & Assigned.");
 
     // 5. CREATE JOB & APPLICATION
     const job = await Job.create({
@@ -115,15 +115,22 @@ const seedDatabase = async () => {
       skills: ["React.js"],
     });
 
+    await JobSkill.create({
+      jobId: job._id,
+      skillId: reactSkill._id,
+      requiredProficiency: "expert",
+    });
+    console.log("💼 Job Posted & Skills Linked.");
+
     await JobApplication.create({
       jobId: job._id,
       seekerId: seeker._id,
       resumeUrl: "/uploads/cvs/ahmed.pdf",
       status: "submitted",
     });
-    console.log("-- Job & Application Created.");
+    console.log("📝 Job Application Submitted.");
 
-    // 6. CREATE AI & FILE DATA (New Part)
+    // 6. CREATE AI & FILE DATA
     // A. CV Upload
     const cv = await CvUpload.create({
       seekerId: seeker._id,
@@ -153,19 +160,30 @@ const seedDatabase = async () => {
       responseData: { score: 88 },
     });
 
-    // D. Job Recommendation (Updated Source)
+    // D. Job Recommendation
     await JobRecommendation.create({
       seekerId: seeker._id,
       jobId: job._id,
       matchPercentage: 95,
-      recommendationSource: "cv_matching", // Updated Enum
+      recommendationSource: "cv_matching",
     });
-
     console.log(
-      "-- AI System Data Seeded (CV, Test, Requests, Recommendations)."
+      "🤖 AI System Data Seeded (CV, Test, Requests, Recommendations)."
     );
 
-    console.log("✅ FINAL SYSTEM CHECK PASSED! DB IS READY.");
+    // 9. COMPANY VERIFICATION DOC (THIS WAS MISSING BEFORE)
+    // This creates a 'pending' document for the Admin to review
+    await CompanyVerificationDocument.create({
+      companyId: company._id,
+      documentType: "tax_certificate",
+      fileName: "tax.pdf",
+      filePath: "/uploads/docs/tax.pdf",
+      fileSize: 5000,
+      verificationStatus: "pending",
+    });
+    console.log("📄 Verification Document Uploaded (Pending Review).");
+
+    console.log("✅✅ FINAL SYSTEM CHECK PASSED! DB IS READY. ✅✅");
     process.exit();
   } catch (err) {
     console.error("❌ Seeding Error:", err.message);

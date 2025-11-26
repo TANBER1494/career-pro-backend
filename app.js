@@ -2,10 +2,14 @@ const express = require("express");
 const morgan = require("morgan");
 const cors = require("cors");
 const AppError = require("./utils/AppError");
+const adminRouter = require("./routes/adminRoutes");
+
+// Import Routes
 const authRouter = require("./routes/authRoutes");
 const companyRouter = require('./routes/companyRoutes'); //////////////////////////////
 const jobRouter = require('./routes/jobRoutes');
 const applicationRouter = require('./routes/applicationRoutes');
+const jobSeekerRouter = require("./routes/jobSeekerRoutes");
 
 const app = express();
 
@@ -16,11 +20,13 @@ if (process.env.NODE_ENV === "development") {
 app.use(cors());
 app.use(express.json());
 
-// Routes
+// Routes Mounting
 app.use("/api/v1/auth", authRouter);
 app.use('/api/v1/company', companyRouter);
 app.use('/api/v1/jobs', jobRouter);
 app.use('/api/v1/applications', applicationRouter);
+app.use("/api/v1/job-seeker", jobSeekerRouter);
+app.use("/api/v1/admin", adminRouter);
 
 // 404 Handler
 app.all(/(.*)/, (req, res, next) => {
