@@ -137,19 +137,35 @@ exports.getCompanyProfile = catchAsync(async (req, res, next) => {
 });
 
 exports.uploadCompanyLogo = catchAsync(async (req, res, next) => {
-  const company = await getCurrentCompany(req.user.id);
-  
+  // 1. التأكد من وجود الملف
   if (!req.file) {
-    return next(new AppError("Please upload an image file", 400));
+    return next(new AppError("Please upload a file", 400));
   }
 
-  company.logoUrl = req.file.path; 
-  await company.save();
+  // 2. تظبيط شكل المسار (الحل السحري هنا) 🛠️
+  // بنشيل الـ "public" لو موجودة عشان الرابط يبقى نسبي (Relative URL)
+  // وبنبدل الـ Backslash (\) بـ Forward slash (/)
+  let logoUrl = req.file.path.replace("public", "").replace(/\\/g, "/");
+  
+  // تأكد إن الرابط بيبدأ بـ /
+  if (!logoUrl.startsWith("/")) {
+    logoUrl = "/" + logoUrl;
+  }
 
+  // 3. تحديث الداتابيز
+  const updatedCompany = await Company.findByIdAndUpdate(
+    req.user.id,
+    { logo: logoUrl },
+    { new: true, runValidators: true }
+  );
+
+  // 4. إرسال الرد بالشكل المطلوب
   res.status(200).json({
     status: "success",
     message: "Company logo updated successfully.",
-    data: { logoUrl: company.logoUrl }
+    data: {
+      logoUrl: logoUrl, // هتطلع دلوقتي: /uploads/images/filename.jpeg
+    },
   });
 });
 

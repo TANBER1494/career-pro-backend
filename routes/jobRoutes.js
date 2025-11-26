@@ -1,12 +1,13 @@
 const express = require("express");
-const authController = require("../controllers/authController");
+// 1. استدعاء ملف الحماية الجديد
+const authMiddleware = require("../middlewares/authMiddleware");
 const jobController = require("../controllers/jobController");
 
 const router = express.Router();
 
-// حماية
-router.use(authController.protect);
-router.use(authController.restrictTo("company"));
+// 2. استخدام الحماية من الملف الجديد
+router.use(authMiddleware.protect);
+router.use(authMiddleware.restrictTo("company"));
 
 // URL: /api/v1/jobs
 router.route("/")
