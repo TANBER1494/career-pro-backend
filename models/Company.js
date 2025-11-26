@@ -39,6 +39,15 @@ const companySchema = new mongoose.Schema(
     foundedYear: Number,
     companyDescription: String,
     logoUrl: String,
+    
+    technologies: [String],
+    benefits: [String],
+    socialMedia: {
+      linkedin: String,
+      twitter: String,
+      facebook: String,
+      instagram: String,
+    },
 
     // Verification System
     isVerified: {

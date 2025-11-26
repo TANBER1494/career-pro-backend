@@ -3,6 +3,9 @@ const morgan = require("morgan");
 const cors = require("cors");
 const AppError = require("./utils/AppError");
 const authRouter = require("./routes/authRoutes");
+const companyRouter = require('./routes/companyRoutes'); //////////////////////////////
+const jobRouter = require('./routes/jobRoutes');
+const applicationRouter = require('./routes/applicationRoutes');
 
 const app = express();
 
@@ -15,6 +18,9 @@ app.use(express.json());
 
 // Routes
 app.use("/api/v1/auth", authRouter);
+app.use('/api/v1/company', companyRouter);
+app.use('/api/v1/jobs', jobRouter);
+app.use('/api/v1/applications', applicationRouter);
 
 // 404 Handler
 app.all(/(.*)/, (req, res, next) => {
