@@ -1,12 +1,11 @@
 const express = require("express");
-const authController = require("../controllers/authController");
 const adminController = require("../controllers/adminController");
-
+const authMiddleware = require("../middlewares/authMiddleware");
 const router = express.Router();
 
 // Protect all routes below (Must be Logged In + Must be Admin)
-router.use(authController.protect);
-router.use(authController.restrictTo("admin"));
+router.use(authMiddleware.protect);
+router.use(authMiddleware.restrictTo("admin"));
 
 router.get("/verification-requests", adminController.getVerificationRequests);
 router.patch(

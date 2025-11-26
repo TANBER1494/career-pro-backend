@@ -1,12 +1,11 @@
 const express = require("express");
 const jobSeekerController = require("../controllers/jobSeekerController");
-const authController = require("../controllers/authController");
 const upload = require("../utils/fileUpload");
-
+const authMiddleware = require("../middlewares/authMiddleware");
 const router = express.Router();
 
-router.use(authController.protect);
-router.use(authController.restrictTo("job_seeker"));
+router.use(authMiddleware.protect);
+router.use(authMiddleware.restrictTo("job_seeker"));
 
 // --- Profile Routes ---
 router.get("/me", jobSeekerController.getMe);
