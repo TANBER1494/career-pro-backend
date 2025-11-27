@@ -3,10 +3,14 @@ const morgan = require("morgan");
 const cors = require("cors");
 const AppError = require("./utils/AppError");
 const adminRouter = require("./routes/adminRoutes");
+const globalErrorHandler = require("./controllers/errorController");
 
 // Import Routes
 const authRouter = require("./routes/authRoutes");
 const jobSeekerRouter = require("./routes/jobSeekerRoutes");
+const companyRouter = require("./routes/companyRoutes");
+const jobRouter = require("./routes/jobRoutes");
+const applicationRouter = require("./routes/applicationRoutes");
 
 const app = express();
 
@@ -21,6 +25,9 @@ app.use(express.json());
 app.use("/api/v1/auth", authRouter);
 app.use("/api/v1/job-seeker", jobSeekerRouter);
 app.use("/api/v1/admin", adminRouter);
+app.use("/api/v1/company", companyRouter);
+app.use("/api/v1/jobs", jobRouter);
+app.use("/api/v1/applications", applicationRouter);
 
 // 404 Handler
 app.all(/(.*)/, (req, res, next) => {
@@ -28,14 +35,6 @@ app.all(/(.*)/, (req, res, next) => {
 });
 
 // Global Error Handler
-app.use((err, req, res, next) => {
-  err.statusCode = err.statusCode || 500;
-  err.status = err.status || "error";
-  res.status(err.statusCode).json({
-    status: err.status,
-    message: err.message,
-    stack: err.stack,
-  });
-});
+app.use(globalErrorHandler);
 
 module.exports = app;

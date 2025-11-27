@@ -2,7 +2,6 @@ const mongoose = require("mongoose");
 
 const companySchema = new mongoose.Schema(
   {
-    // Link to Authentication Table (One-to-One Relationship)
     authId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Authentication",
@@ -14,7 +13,6 @@ const companySchema = new mongoose.Schema(
       required: [true, "Company name is required"],
       trim: true,
     },
-    // Company Details
     industry: {
       type: String,
       trim: true,
@@ -40,7 +38,18 @@ const companySchema = new mongoose.Schema(
     companyDescription: String,
     logoUrl: String,
 
-    // Verification System
+    // --- New Fields Added by Dev 3 (Correct) ---
+    technologies: [String], // Array of strings e.g. ["React", "Node.js"]
+    benefits: [String], // Array of strings e.g. ["Remote Work"]
+
+    socialMedia: {
+      linkedin: String,
+      twitter: String,
+      facebook: String,
+      instagram: String,
+    },
+    // -------------------------------------------
+
     isVerified: {
       type: Boolean,
       default: false,
@@ -62,7 +71,7 @@ const companySchema = new mongoose.Schema(
   }
 );
 
-// Index for faster search by name or industry
+// Indexes
 companySchema.index({ companyName: 1 });
 companySchema.index({ industry: 1 });
 companySchema.index({ isVerified: 1 });
