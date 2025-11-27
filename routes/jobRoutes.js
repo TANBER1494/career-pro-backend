@@ -4,22 +4,43 @@ const jobController = require("../controllers/jobController");
 
 const router = express.Router();
 
+// ============================================================
+// Public Routes
+// ============================================================
+
+router.get("/featured", jobController.getFeaturedJobs);
+
+router.get("/", jobController.getAllJobs);
+
+router.get("/:id", jobController.getJobDetails);
+
+// ============================================================
+// Protected Routes (Company Only)
+// ============================================================
+
 router.use(authMiddleware.protect);
-router.use(authMiddleware.restrictTo("company"));
 
-// URL: /api/v1/jobs
-router
-  .route("/")
-  .post(jobController.createNewJob)
-  .get(jobController.getAllJobs);
+router.get(
+  "/my-jobs",
+  authMiddleware.restrictTo("company"),
+  jobController.getCompanyJobs
+);
 
-// URL: /api/v1/jobs/:id
+router.post(
+  "/",
+  authMiddleware.restrictTo("company"),
+  jobController.createNewJob
+);
+
 router
   .route("/:id")
-  .patch(jobController.editJobDetails)
-  .delete(jobController.deleteJob);
+  .patch(authMiddleware.restrictTo("company"), jobController.editJobDetails)
+  .delete(authMiddleware.restrictTo("company"), jobController.deleteJob);
 
-// URL: /api/v1/jobs/:id/status
-router.patch("/:id/status", jobController.updateJobStatus);
+router.patch(
+  "/:id/status",
+  authMiddleware.restrictTo("company"),
+  jobController.updateJobStatus
+);
 
 module.exports = router;

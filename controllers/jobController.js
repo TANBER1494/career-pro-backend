@@ -14,7 +14,7 @@ const getCurrentCompany = async (authId) => {
 };
 
 // ============================================================
-// Jobs Logic
+// Jobs Logic / protected / Company
 // ============================================================
 
 exports.getCompanyStats = catchAsync(async (req, res, next) => {
@@ -148,7 +148,7 @@ exports.createNewJob = catchAsync(async (req, res, next) => {
   });
 });
 
-exports.getAllJobs = catchAsync(async (req, res, next) => {
+exports.getCompanyJobs = catchAsync(async (req, res, next) => {
   const company = await getCurrentCompany(req.user.id);
 
   const queryObj = { companyId: company._id };
@@ -249,5 +249,119 @@ exports.deleteJob = catchAsync(async (req, res, next) => {
   res.status(204).json({
     status: "success",
     data: null,
+  });
+});
+
+// ============================================================
+// Public / Seeker Logic
+// ============================================================
+
+// 1. Get Featured Jobs (Random 6 jobs for Home Page)
+exports.getFeaturedJobs = catchAsync(async (req, res, next) => {
+  // Using Aggregation Pipeline to get random documents efficiently
+  const jobs = await Job.aggregate([
+    // 1. Filter only published jobs
+    { $match: { status: "published" } },
+
+    // 2. Select 6 random documents
+    { $sample: { size: 6 } },
+  ]);
+
+  // 3. Populate Company Info (Since aggregation returns plain objects)
+  await Job.populate(jobs, {
+    path: "companyId",
+    select: "companyName location logoUrl",
+  });
+
+  res.status(200).json({
+    status: "success",
+    results: jobs.length,
+    data: {
+      jobs,
+    },
+  });
+});
+
+// 2. Get All Jobs (Public Search & Filter)
+exports.getAllJobs = catchAsync(async (req, res, next) => {
+  // A. Filtering Logic
+  const queryObj = { ...req.query };
+  const excludedFields = [
+    "page",
+    "sort",
+    "limit",
+    "fields",
+    "search",
+    "keyword",
+  ];
+  excludedFields.forEach((el) => delete queryObj[el]);
+
+  // Force: Only show published/active jobs to public
+  queryObj.status = "published";
+
+  // B. Search Logic (Title or Description)
+  if (req.query.search) {
+    const searchQuery = req.query.search;
+    // Using Regex for simple search (Case insensitive)
+    queryObj.$or = [
+      { title: { $regex: searchQuery, $options: "i" } },
+      { description: { $regex: searchQuery, $options: "i" } },
+    ];
+  }
+  // Handle specific filters mapping if needed (e.g., location, type are auto-handled by queryObj)
+
+  // C. Build Query
+  let query = Job.find(queryObj).populate({
+    path: "companyId",
+    select: "companyName location logoUrl isVerified",
+  });
+
+  // D. Sorting
+  if (req.query.sort) {
+    const sortBy = req.query.sort.split(",").join(" ");
+    query = query.sort(sortBy);
+  } else {
+    query = query.sort("-createdAt"); // Default: Newest first
+  }
+
+  // E. Pagination
+  const page = req.query.page * 1 || 1;
+  const limit = req.query.limit * 1 || 10;
+  const skip = (page - 1) * limit;
+
+  query = query.skip(skip).limit(limit);
+
+  // F. Execute
+  const jobs = await query;
+
+  // G. Check "isSaved" status (Optional - if user is logged in)
+  // This part requires more logic (checking User's saved jobs list),
+  // For now, we return the jobs. We can add 'isSaved' decoration later in Phase 3.
+
+  res.status(200).json({
+    status: "success",
+    results: jobs.length,
+    data: {
+      jobs,
+    },
+  });
+});
+
+// 3. Get Single Job Details (Public)
+exports.getJobDetails = catchAsync(async (req, res, next) => {
+  const job = await Job.findById(req.params.id).populate({
+    path: "companyId",
+    select: "companyName location logoUrl description website isVerified",
+  });
+
+  if (!job) {
+    return next(new AppError("Job not found", 404));
+  }
+
+  res.status(200).json({
+    status: "success",
+    data: {
+      job,
+    },
   });
 });

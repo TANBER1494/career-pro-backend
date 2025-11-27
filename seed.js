@@ -175,7 +175,7 @@ const seedDatabase = async () => {
     // This creates a 'pending' document for the Admin to review
     await CompanyVerificationDocument.create({
       companyId: company._id,
-      documentType: "tax_certificate",
+      documentType: "business_registration_certificate",
       fileName: "tax.pdf",
       filePath: "/uploads/docs/tax.pdf",
       fileSize: 5000,
