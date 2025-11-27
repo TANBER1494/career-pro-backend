@@ -16,5 +16,6 @@ router.post(
   upload.single("cvFile"),
   jobSeekerController.uploadCV
 );
+router.get("/profile", jobSeekerController.getMe);
 
 module.exports = router;

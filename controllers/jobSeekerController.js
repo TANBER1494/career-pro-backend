@@ -110,27 +110,58 @@ exports.uploadCV = catchAsync(async (req, res, next) => {
   });
 });
 
-// 4. Get My Profile
+// 4. Get Complete Profile (For Dashboard/Profile Page)
 exports.getMe = catchAsync(async (req, res, next) => {
+  // 1. Find Job Seeker Profile linked to the logged-in user
   const seeker = await JobSeeker.findOne({ authId: req.user.id }).populate({
     path: "authId",
-    select: "email accountType isVerified",
+    select: "email isVerified accountType", // Get email from Auth table
   });
 
   if (!seeker) {
-    return next(new AppError("Profile not found", 404));
+    return next(
+      new AppError("Profile not found. Please contact support.", 404)
+    );
   }
 
-  // Get latest CV
-  const latestCv = await CvUpload.findOne({ seekerId: seeker._id }).sort({
-    createdAt: -1,
-  });
+  // 2. Get the Latest Uploaded CV (if exists)
+  const latestCv = await CvUpload.findOne({ seekerId: seeker._id })
+    .sort({ createdAt: -1 }) // Get the newest one
+    .select("filePath fileName createdAt");
+
+  // 3. Format the Response (Matching the API Contract Structure)
+  // We group data into logical sections: Personal, Education, CV
+  const responseData = {
+    personal: {
+      fullName: seeker.fullName,
+      email: seeker.authId.email, // From populated Auth
+      phoneNumber: seeker.phone,
+      birthDate: seeker.birthDate,
+      gender: seeker.gender,
+      location: seeker.location,
+      yearsOfExperience: seeker.yearsOfExperience,
+      industry: seeker.industry,
+      about: seeker.about, // If you added 'about' or 'bio' field
+    },
+    education: {
+      degree: seeker.degree,
+      university: seeker.university,
+      graduationYear: seeker.graduationYear,
+      // Preferences are often displayed with education/career info
+      workType: seeker.workType,
+      workPlace: seeker.workPlace,
+    },
+    cv: latestCv
+      ? {
+          cvUrl: latestCv.filePath.replace(/\\/g, "/"), // Ensure forward slashes for URLs
+          fileName: latestCv.fileName,
+          uploadedAt: latestCv.createdAt,
+        }
+      : null,
+  };
 
   res.status(200).json({
     status: "success",
-    data: {
-      profile: seeker,
-      cv: latestCv ? { url: latestCv.filePath, name: latestCv.fileName } : null,
-    },
+    data: responseData,
   });
 });
