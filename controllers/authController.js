@@ -1,54 +1,81 @@
+const jwt = require("jsonwebtoken");
 const Authentication = require("../models/Authentication");
 const JobSeeker = require("../models/JobSeeker");
 const Company = require("../models/Company");
+const AuthToken = require("../models/AuthToken");
 const catchAsync = require("../utils/catchAsync");
 const AppError = require("../utils/AppError");
-const jwt = require("jsonwebtoken");
-const crypto = require("crypto");
-const AuthToken = require("../models/AuthToken");
 
+// Helper Function to generate JWT
 const signToken = (id) => {
   return jwt.sign({ id }, process.env.JWT_SECRET, {
     expiresIn: process.env.JWT_EXPIRES_IN,
   });
 };
 
-exports.signup = catchAsync(async (req, res, next) => {
-  const { email, password, passwordConfirm, accountType, ...otherData } =
-    req.body;
+// ============================================================
+// Authentication Logic
+// ============================================================
 
+exports.signup = catchAsync(async (req, res, next) => {
+  // 1. Get user input
+  const {
+    email,
+    password,
+    passwordConfirm,
+    accountType,
+    // Dynamic fields based on account type
+    firstName,
+    lastName,
+    companyName,
+    companySize,
+  } = req.body;
+
+  // 2. Check Passwords
   if (password !== passwordConfirm) {
     return next(new AppError("Passwords do not match", 400));
   }
 
-  // 1. Create User
+  // 3. Conditional Validation
+  if (accountType === "company" && !companyName) {
+    return next(
+      new AppError("Company name is required for company accounts", 400)
+    );
+  }
+  if (accountType === "job_seeker" && (!firstName || !lastName)) {
+    return next(
+      new AppError("First name and Last name are required for job seekers", 400)
+    );
+  }
+
+  // 4. Create User (Authentication)
   const newUserAuth = await Authentication.create({
     email,
     password,
     accountType,
   });
 
-  // 2. Create Profile
+  // 5. Create Profile based on account type
   if (accountType === "job_seeker") {
     await JobSeeker.create({
       authId: newUserAuth._id,
-      fullName: otherData.firstName + " " + otherData.lastName,
+      fullName: `${firstName} ${lastName}`,
     });
   } else if (accountType === "company") {
     await Company.create({
       authId: newUserAuth._id,
-      companyName: otherData.companyName || "Pending Name",
-      companySize: otherData.companySize || "1-10",
+      companyName: companyName,
+      companySize: companySize || "1-10",
     });
   }
 
-  // 3. Generate Verification Code (6 Digits)
+  // 6. Generate Verification Code (6 Digits)
   const verificationCode = Math.floor(
     100000 + Math.random() * 900000
   ).toString();
   const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
 
-  // 4. Save Code to DB
+  // 7. Save Code to DB
   await AuthToken.create({
     authId: newUserAuth._id,
     token: verificationCode,
@@ -56,7 +83,7 @@ exports.signup = catchAsync(async (req, res, next) => {
     expiresAt,
   });
 
-  // 5. Send Email (Simulated via Console for now)
+  // 8. Send Email (Simulated via Console)
   console.log(`🔐 VERIFICATION CODE FOR ${email}: ${verificationCode}`);
 
   res.status(201).json({
@@ -87,13 +114,13 @@ exports.verifyEmail = catchAsync(async (req, res, next) => {
     return next(new AppError("User is already verified", 400));
   }
 
-  // 2. Check Token (Must match, be correct type, not used, and not expired)
+  // 2. Check Token
   const authToken = await AuthToken.findOne({
     authId: user._id,
     token: verificationCode,
     tokenType: "email_verification",
     isUsed: false,
-    expiresAt: { $gt: Date.now() }, // Expiry time must be in the future
+    expiresAt: { $gt: Date.now() },
   });
 
   if (!authToken) {
@@ -141,7 +168,7 @@ exports.login = catchAsync(async (req, res, next) => {
     return next(new AppError("Incorrect email or password", 401));
   }
 
-  // 3) Check if user is verified (THIS IS THE NEW PART) ✅
+  // 3) Check if user is verified
   if (!user.isVerified) {
     return next(
       new AppError(
@@ -151,7 +178,7 @@ exports.login = catchAsync(async (req, res, next) => {
     );
   }
 
-  // 4) If everything ok, send token to client
+  // 4) If everything ok, send token
   const token = signToken(user._id);
 
   res.status(200).json({
@@ -188,9 +215,13 @@ exports.getMe = catchAsync(async (req, res, next) => {
         email: user.email,
         accountType: user.accountType,
         isVerified: user.isVerified,
-        // Add profile info if available
-        firstName: profile ? profile.fullName.split(" ")[0] : "",
-        lastName: profile ? profile.fullName.split(" ").slice(1).join(" ") : "",
+        // Add profile info safely
+        firstName:
+          profile && profile.fullName ? profile.fullName.split(" ")[0] : "",
+        lastName:
+          profile && profile.fullName
+            ? profile.fullName.split(" ").slice(1).join(" ")
+            : "",
         companyName: profile ? profile.companyName : undefined,
       },
     },
