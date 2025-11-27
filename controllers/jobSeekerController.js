@@ -130,7 +130,14 @@ exports.getMe = catchAsync(async (req, res, next) => {
     status: "success",
     data: {
       profile: seeker,
-      cv: latestCv ? { url: latestCv.filePath, name: latestCv.fileName } : null,
+      account: seeker.authId,
+      cv: latestCv
+        ? {
+            url: latestCv.filePath,
+            fileName: latestCv.fileName,
+            uploadedAt: latestCv.createdAt,
+          }
+        : null,
     },
   });
 });

@@ -1,11 +1,12 @@
+const crypto = require("crypto");
+const jwt = require("jsonwebtoken");
+const { promisify } = require("util");
 const Authentication = require("../models/Authentication");
 const JobSeeker = require("../models/JobSeeker");
 const Company = require("../models/Company");
+const AuthToken = require("../models/AuthToken"); // تأكد إن الملف ده موجود
 const catchAsync = require("../utils/catchAsync");
 const AppError = require("../utils/AppError");
-const jwt = require("jsonwebtoken");
-const crypto = require("crypto");
-const AuthToken = require("../models/AuthToken");
 
 const signToken = (id) => {
   return jwt.sign({ id }, process.env.JWT_SECRET, {
@@ -13,42 +14,66 @@ const signToken = (id) => {
   });
 };
 
+// ============================================================
+// 1. SIGNUP
+// ============================================================
 exports.signup = catchAsync(async (req, res, next) => {
-  const { email, password, passwordConfirm, accountType, ...otherData } =
-    req.body;
+  // 1) Get user input
+  const {
+    email,
+    password,
+    passwordConfirm,
+    accountType,
+    firstName,
+    lastName,
+    companyName,
+  } = req.body;
+
+  // 2) Validation based on Account Type
+  if (accountType === "job_seeker") {
+    if (!firstName || !lastName) {
+      return next(new AppError("First name and Last name are required.", 400));
+    }
+  } else if (accountType === "company") {
+    if (!companyName) {
+      return next(new AppError("Company name is required.", 400));
+    }
+  } else {
+    return next(new AppError("Invalid account type.", 400));
+  }
 
   if (password !== passwordConfirm) {
     return next(new AppError("Passwords do not match", 400));
   }
 
-  // 1. Create User
+  // 3) Create Authentication Record
   const newUserAuth = await Authentication.create({
     email,
     password,
     accountType,
   });
 
-  // 2. Create Profile
+  // 4) Create Profile
   if (accountType === "job_seeker") {
     await JobSeeker.create({
       authId: newUserAuth._id,
-      fullName: otherData.firstName + " " + otherData.lastName,
+      fullName: `${firstName} ${lastName}`,
     });
   } else if (accountType === "company") {
     await Company.create({
       authId: newUserAuth._id,
-      companyName: otherData.companyName || "Pending Name",
-      companySize: otherData.companySize || "1-10",
+      companyName: companyName,
+      companySize: "1-10",
     });
   }
 
-  // 3. Generate Verification Code (6 Digits)
+  // 5) Generate Verification Code (OTP)
   const verificationCode = Math.floor(
     100000 + Math.random() * 900000
   ).toString();
-  const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+  const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 mins
 
-  // 4. Save Code to DB
+  // 6) Save Code to DB (AuthToken)
   await AuthToken.create({
     authId: newUserAuth._id,
     token: verificationCode,
@@ -56,9 +81,11 @@ exports.signup = catchAsync(async (req, res, next) => {
     expiresAt,
   });
 
-  // 5. Send Email (Simulated via Console for now)
+  // 7) Simulate Sending Email (Console Log)
+  // (بعدين هنبدلها بـ sendEmail الحقيقية)
   console.log(`🔐 VERIFICATION CODE FOR ${email}: ${verificationCode}`);
 
+  // 8) Send Response (No Token yet)
   res.status(201).json({
     status: "success",
     message:
@@ -74,6 +101,9 @@ exports.signup = catchAsync(async (req, res, next) => {
   });
 });
 
+// ============================================================
+// 2. VERIFY EMAIL
+// ============================================================
 exports.verifyEmail = catchAsync(async (req, res, next) => {
   const { email, verificationCode } = req.body;
 
@@ -87,13 +117,13 @@ exports.verifyEmail = catchAsync(async (req, res, next) => {
     return next(new AppError("User is already verified", 400));
   }
 
-  // 2. Check Token (Must match, be correct type, not used, and not expired)
+  // 2. Check Token
   const authToken = await AuthToken.findOne({
     authId: user._id,
     token: verificationCode,
     tokenType: "email_verification",
     isUsed: false,
-    expiresAt: { $gt: Date.now() }, // Expiry time must be in the future
+    expiresAt: { $gt: Date.now() },
   });
 
   if (!authToken) {
@@ -126,32 +156,31 @@ exports.verifyEmail = catchAsync(async (req, res, next) => {
   });
 });
 
+// ============================================================
+// 3. LOGIN
+// ============================================================
 exports.login = catchAsync(async (req, res, next) => {
   const { email, password } = req.body;
 
-  // 1) Check if email and password exist
   if (!email || !password) {
     return next(new AppError("Please provide email and password!", 400));
   }
 
-  // 2) Check if user exists & password is correct
   const user = await Authentication.findOne({ email }).select("+password");
 
   if (!user || !(await user.correctPassword(password, user.password))) {
     return next(new AppError("Incorrect email or password", 401));
   }
 
-  // 3) Check if user is verified (THIS IS THE NEW PART) ✅
   if (!user.isVerified) {
     return next(
       new AppError(
-        "Your account is not verified. Please check your email for the verification code.",
+        "Your account is not verified. Please check your email.",
         403
       )
     );
   }
 
-  // 4) If everything ok, send token to client
   const token = signToken(user._id);
 
   res.status(200).json({
@@ -168,12 +197,13 @@ exports.login = catchAsync(async (req, res, next) => {
   });
 });
 
+// ============================================================
+// 4. GET ME
+// ============================================================
 exports.getMe = catchAsync(async (req, res, next) => {
-  // req.user is already available from 'protect' middleware
   const user = req.user;
-
-  // Fetch profile data based on account type
   let profile = null;
+
   if (user.accountType === "job_seeker") {
     profile = await JobSeeker.findOne({ authId: user._id });
   } else if (user.accountType === "company") {
@@ -188,10 +218,10 @@ exports.getMe = catchAsync(async (req, res, next) => {
         email: user.email,
         accountType: user.accountType,
         isVerified: user.isVerified,
-        // Add profile info if available
-        firstName: profile ? profile.fullName.split(" ")[0] : "",
-        lastName: profile ? profile.fullName.split(" ").slice(1).join(" ") : "",
-        companyName: profile ? profile.companyName : undefined,
+        // Safe navigation (?.) to prevent errors if profile is missing
+        firstName: profile?.fullName?.split(" ")[0] || "",
+        lastName: profile?.fullName?.split(" ").slice(1).join(" ") || "",
+        companyName: profile?.companyName || undefined,
       },
     },
   });
