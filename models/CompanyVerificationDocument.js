@@ -12,11 +12,7 @@ const companyVerificationDocumentSchema = new mongoose.Schema(
     // Document Details
     documentType: {
       type: String,
-      enum: [
-        "business_registration_certificate",
-        "tax_certificate",
-        "company_profile_document",
-      ],
+      enum: ["business_registration_certificate"],
       required: [true, "Document type is required"],
     },
     fileName: {

@@ -182,26 +182,35 @@ exports.uploadVerificationDoc = catchAsync(async (req, res, next) => {
   const company = await getCurrentCompany(req.user.id);
 
   if (!req.file) {
-    return next(new AppError("Please upload a document", 400));
+    return next(new AppError("Please upload the verification file", 400));
   }
+
+  // Optional: Delete previous pending documents to ensure only one active file exists
+  await CompanyVerificationDocument.deleteMany({
+    companyId: company._id,
+    verificationStatus: { $in: ["pending", "rejected"] },
+  });
 
   const newDoc = await CompanyVerificationDocument.create({
     companyId: company._id,
-    documentType: req.body.documentType || "tax_certificate",
+    // We default to one type since it's now a single file requirement
+    documentType: "business_registration_certificate",
     fileName: req.file.originalname,
     filePath: req.file.path.replace(/\\/g, "/"),
     fileType: req.file.mimetype.split("/")[1] || "pdf",
     fileSize: req.file.size,
-    verificationStatus: "pending", // Ensure default is pending
+    verificationStatus: "pending",
   });
 
   // Update company status to indicate review is in progress
   company.verificationStatus = "in_progress";
+  // Since it's a single file, uploading it means 100% of "uploading" is done
+  company.verificationProgress = 100;
   await company.save();
 
   res.status(200).json({
     status: "success",
-    message: "Verification document uploaded successfully",
+    message: "Verification file uploaded successfully",
     data: {
       documentUrl: newDoc.filePath,
       fileName: newDoc.fileName,

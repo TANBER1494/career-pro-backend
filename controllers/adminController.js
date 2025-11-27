@@ -8,7 +8,6 @@ exports.getVerificationRequests = catchAsync(async (req, res, next) => {
   // Get documents with status 'pending' (or allow filtering via query)
   const status = req.query.status || "pending";
 
-  // --- أضف هذا السطر للطباعة في التيرمينال ---
   console.log(`🔎 Searching for documents with status: ${status}`);
 
   const requests = await CompanyVerificationDocument.find({
@@ -18,7 +17,6 @@ exports.getVerificationRequests = catchAsync(async (req, res, next) => {
     select: "companyName industry location", // Show company details
   });
 
-  // --- أضف هذا السطر أيضاً ---
   console.log(`📄 Found ${requests.length} documents.`);
 
   res.status(200).json({
@@ -33,9 +31,8 @@ exports.getVerificationRequests = catchAsync(async (req, res, next) => {
 // 2. Verify or Reject a Company
 exports.reviewCompanyVerification = catchAsync(async (req, res, next) => {
   const { documentId } = req.params;
-  const { status, rejectionReason } = req.body; // status should be 'approved' or 'rejected'
+  const { status, rejectionReason } = req.body;
 
-  // A. Validate Input
   if (!["approved", "rejected"].includes(status)) {
     return next(
       new AppError("Status must be either approved or rejected", 400)
@@ -46,31 +43,36 @@ exports.reviewCompanyVerification = catchAsync(async (req, res, next) => {
     return next(new AppError("Please provide a rejection reason", 400));
   }
 
-  // B. Find the Document
   const doc = await CompanyVerificationDocument.findById(documentId);
   if (!doc) {
     return next(new AppError("Verification document not found", 404));
   }
 
-  // C. Update Document Status
+  // 1. Update Document Status
   doc.verificationStatus = status;
   doc.rejectionReason = status === "rejected" ? rejectionReason : undefined;
-  doc.reviewedBy = req.user.id; // Admin ID from protect middleware
+  doc.reviewedBy = req.user.id;
   doc.reviewedAt = Date.now();
   await doc.save();
 
-  // D. Update Company Status (The most important part)
+  // 2. Update Company Status
+  // Ensure we wait for the update to complete
   const company = await Company.findById(doc.companyId);
+
+  if (!company) {
+    return next(new AppError("Associated company not found", 404));
+  }
 
   if (status === "approved") {
     company.isVerified = true;
     company.verificationStatus = "verified";
-    company.verificationProgress = 100;
   } else {
     company.isVerified = false;
     company.verificationStatus = "rejected";
-    // Progress remains same or resets, depends on logic. Let's keep it same.
+    // Optionally reset progress if rejected to force re-upload
+    company.verificationProgress = 0;
   }
+
   await company.save();
 
   res.status(200).json({
@@ -79,6 +81,7 @@ exports.reviewCompanyVerification = catchAsync(async (req, res, next) => {
     data: {
       document: doc,
       companyStatus: company.verificationStatus,
+      isVerified: company.isVerified,
     },
   });
 });
