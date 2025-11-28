@@ -36,6 +36,8 @@ exports.updateProfileStep1 = catchAsync(async (req, res, next) => {
     { new: true, runValidators: true, upsert: true }
   );
 
+  await Authentication.findByIdAndUpdate(req.user.id, { registrationStep: 2 });
+
   res.status(200).json({
     status: "success",
     message: "Personal information updated successfully",
@@ -69,6 +71,7 @@ exports.updateProfileStep2 = catchAsync(async (req, res, next) => {
   if (!updatedSeeker) {
     return next(new AppError("Please complete Step 1 first", 404));
   }
+  await Authentication.findByIdAndUpdate(req.user.id, { registrationStep: 3 });
 
   res.status(200).json({
     status: "success",
@@ -98,6 +101,8 @@ exports.uploadCV = catchAsync(async (req, res, next) => {
     fileSize: req.file.size,
     uploadStatus: "uploaded",
   });
+
+  await Authentication.findByIdAndUpdate(req.user.id, { registrationStep: 4 });
 
   res.status(201).json({
     status: "success",

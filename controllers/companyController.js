@@ -4,6 +4,7 @@ const catchAsync = require("../utils/catchAsync");
 const AppError = require("../utils/AppError");
 const Job = require("../models/Job");
 const JobApplication = require("../models/JobApplication");
+Authentication = require("../models/Authentication");
 
 // --- Helper: Get Company Document from Auth ID ---
 const getCurrentCompany = async (authId) => {
@@ -76,10 +77,26 @@ exports.updateCompanyProfile = catchAsync(async (req, res, next) => {
     }
   );
 
-  // Dynamic Response Construction based on Contract
   const isStep2Update =
     technologies || benefits || linkedin || twitter || facebook || instagram;
 
+  // ============================================================
+  // ✅ Registration Step Tracking Logic (New Addition)
+  // ============================================================
+  const Authentication = require("../models/Authentication");
+
+  if (isStep2Update) {
+    await Authentication.findByIdAndUpdate(req.user.id, {
+      registrationStep: 3,
+    });
+  } else {
+    await Authentication.findByIdAndUpdate(req.user.id, {
+      registrationStep: 2,
+    });
+  }
+  // ============================================================
+
+  // Dynamic Response Construction
   let responsePayload = {};
   let message = "Company information updated successfully";
 
@@ -207,6 +224,8 @@ exports.uploadVerificationDoc = catchAsync(async (req, res, next) => {
   // Since it's a single file, uploading it means 100% of "uploading" is done
   company.verificationProgress = 100;
   await company.save();
+
+  await Authentication.findByIdAndUpdate(req.user.id, { registrationStep: 4 });
 
   res.status(200).json({
     status: "success",

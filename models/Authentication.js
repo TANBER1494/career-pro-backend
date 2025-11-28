@@ -31,11 +31,16 @@ const authenticationSchema = new mongoose.Schema(
       default: true,
       select: false,
     },
+    registrationStep: {
+      type: Number,
+      default: 1, // 1: Basic Info (البداية), 2: Education/Details, 3: CV/Docs, 4: Completed
+    },
     lastLogin: Date,
     passwordChangedAt: Date,
     passwordResetToken: String,
     passwordResetExpires: Date,
   },
+
   {
     timestamps: true, // Automatically adds createdAt and updatedAt
   }

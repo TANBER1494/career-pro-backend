@@ -215,6 +215,7 @@ exports.getMe = catchAsync(async (req, res, next) => {
         email: user.email,
         accountType: user.accountType,
         isVerified: user.isVerified,
+        registrationStep: user.registrationStep,
         // Add profile info safely
         firstName:
           profile && profile.fullName ? profile.fullName.split(" ")[0] : "",

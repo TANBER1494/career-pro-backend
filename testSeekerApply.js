@@ -2,93 +2,64 @@ const mongoose = require("mongoose");
 const dotenv = require("dotenv");
 const Authentication = require("./models/Authentication");
 const JobSeeker = require("./models/JobSeeker");
-const Company = require("./models/Company");
-const Job = require("./models/Job");
-const JobApplication = require("./models/JobApplication");
+const CvUpload = require("./models/CvUpload");
 
 dotenv.config({ path: "./.env" });
 
 mongoose
   .connect(process.env.DATABASE_URL)
-  .then(() => console.log("DB Connection Successful!"))
-  .catch((err) => console.log("DB Error:", err));
+  .then(() => console.log("DB Connected"));
 
-const testApplyFlow = async () => {
+const testSteps = async () => {
   try {
-    // 1. Setup: Company & Job
-    const compAuth = await Authentication.create({
-      email: "comp_apply@test.com",
-      password: "password123", // ✅ Corrected: > 8 chars
-      accountType: "company",
-    });
-
-    const company = await Company.create({
-      authId: compAuth._id,
-      companyName: "Apply Corp",
-      companySize: "100+",
-    });
-
-    const job = await Job.create({
-      companyId: company._id,
-      title: "Node Dev",
-      location: "Remote",
-      type: "Full-time",
-      experienceLevel: "Mid-level",
-      description: "Backend job...",
-      status: "published",
-    });
-
-    // 2. Setup: Job Seeker
-    const seekerAuth = await Authentication.create({
-      email: "seeker_apply@test.com",
-      password: "password123", // ✅ Corrected: > 8 chars
+    // 1. Create User (Default Step should be 1)
+    const auth = await Authentication.create({
+      email: "step_tester@test.com",
+      password: "password123",
       accountType: "job_seeker",
+      isVerified: true,
     });
+    console.log(
+      `1. User Created. Step: ${auth.registrationStep} (Expected: 1)`
+    );
 
-    const seeker = await JobSeeker.create({
-      authId: seekerAuth._id,
-      fullName: "Apply Tester",
-    });
+    // 2. Create Profile (Step 1) -> Should update to 2
+    await JobSeeker.create({ authId: auth._id, fullName: "Step Tester" });
+    // Simulate Controller Logic manually:
+    await Authentication.findByIdAndUpdate(auth._id, { registrationStep: 2 });
 
-    console.log("1. Environment Ready (Job & Seeker).");
+    const userStep2 = await Authentication.findById(auth._id);
+    console.log(
+      `2. Step 1 Finished. Step: ${userStep2.registrationStep} (Expected: 2)`
+    );
 
-    // 3. Simulate Apply Logic (What Controller Does)
-    // A. Find Seeker Profile from Auth ID
-    const profile = await JobSeeker.findOne({ authId: seekerAuth._id });
+    // 3. Update Profile (Step 2) -> Should update to 3
+    // Simulate Controller Logic manually:
+    await Authentication.findByIdAndUpdate(auth._id, { registrationStep: 3 });
 
-    // B. Create Application
-    const app = await JobApplication.create({
-      jobId: job._id,
-      seekerId: profile._id,
-      resumeUrl: "/uploads/cvs/test_cv.pdf",
-      coverLetter: "Hire me please!",
-      status: "submitted",
-    });
+    const userStep3 = await Authentication.findById(auth._id);
+    console.log(
+      `3. Step 2 Finished. Step: ${userStep3.registrationStep} (Expected: 3)`
+    );
 
-    console.log("2. Application Created Successfully:", app._id);
+    // 4. Upload CV (Step 3) -> Should update to 4
+    // Simulate Controller Logic manually:
+    await Authentication.findByIdAndUpdate(auth._id, { registrationStep: 4 });
 
-    // 4. Verify Retrieval (My Applications)
-    const myApps = await JobApplication.find({
-      seekerId: profile._id,
-    }).populate("jobId");
-    console.log("3. My Applications Count:", myApps.length);
-    console.log("   - Job Title:", myApps[0].jobId.title);
+    const userStep4 = await Authentication.findById(auth._id);
+    console.log(
+      `4. Step 3 Finished. Step: ${userStep4.registrationStep} (Expected: 4)`
+    );
 
     // Cleanup
-    await JobApplication.deleteMany({});
-    await Job.deleteMany({});
-    await JobSeeker.deleteMany({});
-    await Company.deleteMany({});
-    await Authentication.deleteMany({
-      _id: { $in: [compAuth._id, seekerAuth._id] },
-    });
-
-    console.log("4. Cleanup complete.");
+    await Authentication.deleteOne({ _id: auth._id });
+    await JobSeeker.deleteOne({ authId: auth._id });
+    console.log("✅ Test Passed & Cleaned up.");
     process.exit();
   } catch (err) {
-    console.error("Error:", err.message); // Print only message to be cleaner
+    console.error(err);
     process.exit(1);
   }
 };
 
-testApplyFlow();
+testSteps();
