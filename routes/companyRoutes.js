@@ -5,7 +5,7 @@ const authMiddleware = require("../middlewares/authMiddleware");
 
 // Controllers
 const companyController = require("../controllers/companyController");
-const companyPublicController = require("../controllers/companyPublicController"); // ✅ الجديد
+const companyPublicController = require("../controllers/companyPublicController");
 const applicationController = require("../controllers/applicationController");
 const upload = require("../utils/fileUpload");
 
@@ -57,7 +57,6 @@ router.post(
 );
 
 // --- Applications View ---
-// عرض المتقدمين الخاصين بهذه الشركة
 router.get("/applications", applicationController.getCompanyApplications);
 
 module.exports = router;
