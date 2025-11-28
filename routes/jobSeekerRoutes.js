@@ -3,6 +3,7 @@ const jobSeekerController = require("../controllers/jobSeekerController");
 const upload = require("../utils/fileUpload");
 const authMiddleware = require("../middlewares/authMiddleware");
 const router = express.Router();
+const applicationController = require("../controllers/applicationController");
 
 router.use(authMiddleware.protect);
 router.use(authMiddleware.restrictTo("job_seeker"));
@@ -17,5 +18,7 @@ router.post(
   jobSeekerController.uploadCV
 );
 router.get("/profile", jobSeekerController.getMe);
+// GET /api/v1/job-seeker/applications
+router.get("/applications", applicationController.getSeekerApplications);
 
 module.exports = router;

@@ -165,3 +165,40 @@ exports.getMe = catchAsync(async (req, res, next) => {
     data: responseData,
   });
 });
+
+// 5. Toggle Save Job (Add/Remove from favorites)
+exports.toggleSaveJob = catchAsync(async (req, res, next) => {
+  const jobId = req.params.id;
+
+  // 1. Get Seeker Profile
+  const seeker = await JobSeeker.findOne({ authId: req.user.id });
+  if (!seeker) {
+    return next(new AppError("Profile not found.", 404));
+  }
+
+  // 2. Check if job is already saved
+  // We convert ObjectId to string for comparison
+  const isJobSaved = seeker.savedJobs.some((id) => id.toString() === jobId);
+
+  let message = "";
+
+  if (isJobSaved) {
+    // Remove job (Filter it out)
+    seeker.savedJobs = seeker.savedJobs.filter((id) => id.toString() !== jobId);
+    message = "Job removed from saved list.";
+  } else {
+    // Add job
+    seeker.savedJobs.push(jobId);
+    message = "Job saved successfully.";
+  }
+
+  await seeker.save({ validateBeforeSave: false }); // Save changes
+
+  res.status(200).json({
+    status: "success",
+    message,
+    data: {
+      isSaved: !isJobSaved, // Return the new status
+    },
+  });
+});

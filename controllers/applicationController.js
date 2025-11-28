@@ -4,6 +4,7 @@ const JobApplication = require("../models/JobApplication");
 const SeekerSkill = require("../models/SeekerSkill");
 const catchAsync = require("../utils/catchAsync");
 const AppError = require("../utils/AppError");
+const JobSeeker = require("../models/JobSeeker");
 
 // Helper
 const getCurrentCompany = async (authId) => {
@@ -129,5 +130,103 @@ exports.updateApplicationStatus = catchAsync(async (req, res, next) => {
   res.status(200).json({
     status: "success",
     message: `Application status updated to ${status}.`,
+  });
+});
+
+// ============================================================
+// Job Seeker Logic (New Implementation)
+// ============================================================
+
+exports.applyForJob = catchAsync(async (req, res, next) => {
+  if (!req.file) {
+    return next(
+      new AppError("CV file is required. Please upload PDF or DOCX.", 400)
+    );
+  }
+
+  const jobId = req.params.id;
+  const authId = req.user.id;
+
+  const job = await Job.findOne({ _id: jobId, status: "published" });
+  if (!job) {
+    return next(
+      new AppError("Job not found or no longer accepting applications.", 404)
+    );
+  }
+
+  const seeker = await JobSeeker.findOne({ authId });
+  if (!seeker) {
+    return next(
+      new AppError("Please complete your profile before applying.", 400)
+    );
+  }
+
+  // 4.    (Double Check)
+  const existingApplication = await JobApplication.findOne({
+    jobId: job._id,
+    seekerId: seeker._id,
+  });
+
+  if (existingApplication) {
+    return next(new AppError("You have already applied for this job.", 400));
+  }
+
+  const newApplication = await JobApplication.create({
+    jobId: job._id,
+    seekerId: seeker._id,
+    resumeUrl: req.file.path.replace(/\\/g, "/"),
+    coverLetter: req.body.coverLetter,
+    status: "submitted",
+  });
+
+  res.status(201).json({
+    status: "success",
+    message: "Application submitted successfully.",
+    data: {
+      applicationId: newApplication._id,
+      jobTitle: job.title,
+      status: newApplication.status,
+    },
+  });
+});
+
+exports.getSeekerApplications = catchAsync(async (req, res, next) => {
+  // 1. Get Seeker Profile
+  const seeker = await JobSeeker.findOne({ authId: req.user.id });
+  if (!seeker) {
+    return next(new AppError("Profile not found.", 404));
+  }
+
+  // 2. Find Applications
+  const applications = await JobApplication.find({ seekerId: seeker._id })
+    .sort({ appliedAt: -1 })
+    .populate({
+      path: "jobId",
+      select: "title location type companyId",
+      populate: { path: "companyId", select: "companyName logoUrl" },
+    });
+
+  // 3. Format Response
+  const formattedApps = applications.map((app) => ({
+    id: app._id,
+    jobTitle: app.jobId ? app.jobId.title : "Job Removed",
+    companyName:
+      app.jobId && app.jobId.companyId
+        ? app.jobId.companyId.companyName
+        : "Unknown Company",
+    companyLogo:
+      app.jobId && app.jobId.companyId ? app.jobId.companyId.logoUrl : null,
+    location: app.jobId ? app.jobId.location : "N/A",
+    type: app.jobId ? app.jobId.type : "N/A",
+    status: app.status, // submitted, under_review, etc.
+    appliedAt: app.appliedAt,
+  }));
+
+  res.status(200).json({
+    status: "success",
+    results: formattedApps.length,
+    data: {
+      applications: formattedApps,
+    },
   });
 });

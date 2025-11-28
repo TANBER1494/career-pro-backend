@@ -52,7 +52,13 @@ const jobSeekerSchema = new mongoose.Schema(
       default: 0,
     },
     industry: String,
-
+    // Saved Jobs (Array of Job IDs)
+    savedJobs: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Job",
+      },
+    ],
     // Work Preferences
     workType: {
       type: String,
