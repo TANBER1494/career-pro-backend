@@ -4,33 +4,32 @@ const express = require("express");
 const authMiddleware = require("../middlewares/authMiddleware");
 
 // Controllers
-const companyController = require("../controllers/companyController"); // (Dev 3)
+const companyController = require("../controllers/companyController");
+const companyPublicController = require("../controllers/companyPublicController"); // ✅ الجديد
 const applicationController = require("../controllers/applicationController");
-// 👇 الكنترولر الجديد بتاعك
-const companyPublicController = require("../controllers/companyPublicController");
 const upload = require("../utils/fileUpload");
 
 const router = express.Router();
 
 // ============================================================
-// 🌍 Public Routes (استكشاف الشركات - متاح للكل)
+// 1. Public Routes (No Login Required) 🌍
 // ============================================================
-// ⚠️ هام: لازم يتحطوا في الأول قبل الـ protect
 
-// 1. Top Companies (Random)
+// Get Top Companies (Home Page)
 router.get("/top", companyPublicController.getTopCompanies);
 
-// 2. All Companies (Search & Filter)
+// Search & Filter Companies
 router.get("/", companyPublicController.getAllCompanies);
 
-// 3. Single Company Details (Public View)
-// استخدمنا /:id/public عشان نفرقها عن أي روت تاني ممكن يكون فيه ID
+// Get Company Details (Public View for Seekers)
 router.get("/:id/public", companyPublicController.getCompanyDetails);
 
+
 // ============================================================
-// 🔒 Protected Routes (إدارة الشركة - Company Only)
+// 2. Protected Routes (Company Only) 🔒
 // ============================================================
-// ⛔ أي حاجة تحت السطر ده محتاجة توكن شركة
+
+// Apply protection to all routes below
 router.use(authMiddleware.protect);
 router.use(authMiddleware.restrictTo("company"));
 
@@ -40,23 +39,25 @@ router.get("/dashboard", companyController.getCompanyStats);
 // --- Profile Management ---
 router.get("/profile", companyController.getCompanyProfile);
 
+// Update Profile (Step 1 & Step 2)
 router.patch("/profile/step1", companyController.updateCompanyProfile);
 router.patch("/profile/step2", companyController.updateCompanyProfile);
 
 // Uploads
 router.post(
-  "/profile/step3",
-  upload.single("verificationDocument"),
+  "/profile/step3", 
+  upload.single("verificationDocument"), 
   companyController.uploadVerificationDoc
 );
 
 router.post(
-  "/profile/logo",
-  upload.single("logoFile"),
+  "/profile/logo", 
+  upload.single("logoFile"), 
   companyController.uploadCompanyLogo
 );
 
 // --- Applications View ---
+// عرض المتقدمين الخاصين بهذه الشركة
 router.get("/applications", applicationController.getCompanyApplications);
 
 module.exports = router;
