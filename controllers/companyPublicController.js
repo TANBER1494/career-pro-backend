@@ -7,16 +7,16 @@ const AppError = require("../utils/AppError");
 // 1. Get Top Companies (Random 6 Verified Companies)
 // ============================================================
 exports.getTopCompanies = catchAsync(async (req, res, next) => {
-  // بنستخدم Aggregate عشان نختار عشوائي ($sample)
+  // Use Aggregation to select random documents efficiently
   const companies = await Company.aggregate([
-    // 1) هات الشركات الموثقة بس (عشان نعرض الأفضل في الصفحة الرئيسية)
-    // ملحوظة: لو الداتابيز لسه فاضية ومفيش شركات موثقة، ممكن تشيل السطر ده مؤقتاً للتجربة
+    // 1) Filter: Get only verified companies (To showcase the best)
+    // Note: If DB is empty/has no verified companies, comment this out for testing
     { $match: { isVerified: true } },
 
-    // 2) اختار 6 عشوائي
+    // 2) Sample: Select 6 random documents
     { $sample: { size: 6 } },
 
-    // 3) هات البيانات اللي تهم الزائر بس (مش كل حاجة)
+    // 3) Project: Select only public-facing fields
     {
       $project: {
         _id: 1,
@@ -50,17 +50,28 @@ exports.getAllCompanies = catchAsync(async (req, res, next) => {
     queryObj.companyName = { $regex: req.query.search, $options: "i" };
   }
 
-  // Select fields to display in the list
+  // Initialize Query with field selection
   let query = Company.find(queryObj).select(
     "companyName logoUrl industry location companySize isVerified"
   );
 
+  // --- Sorting (ADDED FIX) ---
+  // Always add a default sort to ensure consistent pagination
+  if (req.query.sort) {
+    const sortBy = req.query.sort.split(',').join(' ');
+    query = query.sort(sortBy);
+  } else {
+    query = query.sort('-createdAt'); // Default: Newest first
+  }
+
   // --- Pagination ---
   const page = req.query.page * 1 || 1;
-  const limit = req.query.limit * 1 || 12; // بنعرض 12 كارت في الصفحة
+  const limit = req.query.limit * 1 || 12; // 12 Cards per page
   const skip = (page - 1) * limit;
+  
   query = query.skip(skip).limit(limit);
 
+  // Execute Query
   const companies = await query;
 
   res.status(200).json({
@@ -74,17 +85,17 @@ exports.getAllCompanies = catchAsync(async (req, res, next) => {
 // 3. Get Company Details & Active Jobs (Public View)
 // ============================================================
 exports.getCompanyDetails = catchAsync(async (req, res, next) => {
-  // أ) هات بيانات الشركة
+  // A) Get Company Data
   const company = await Company.findById(req.params.id).select(
-    "-authId -verificationProgress"
-  ); // نخفي البيانات الحساسة
+    "-authId -verificationProgress -verificationStatus"
+  ); // Exclude sensitive/internal data
 
   if (!company) {
     return next(new AppError("Company not found", 404));
   }
 
-  // ب) هات الوظايف النشطة (Published) بتاعتها
-  // لاحظ: بنختار الحقول اللي هتظهر في الكارت الصغير بس
+  // B) Get Company's Active Jobs
+  // Note: Select fields relevant for the "Job Card" view
   const companyJobs = await Job.find({
     companyId: company._id,
     status: "published",
@@ -94,7 +105,7 @@ exports.getCompanyDetails = catchAsync(async (req, res, next) => {
     status: "success",
     data: {
       company,
-      jobs: companyJobs,
+      openPositions: companyJobs, // Renamed to match common UI patterns
     },
   });
 });
