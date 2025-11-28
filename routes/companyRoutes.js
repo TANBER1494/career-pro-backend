@@ -22,8 +22,7 @@ router.get("/top", companyPublicController.getTopCompanies);
 router.get("/", companyPublicController.getAllCompanies);
 
 // Get Company Details (Public View for Seekers)
-router.get("/:id/public", companyPublicController.getCompanyDetails);
-
+router.get("/:id", companyPublicController.getCompanyDetails);
 
 // ============================================================
 // 2. Protected Routes (Company Only) 🔒
@@ -45,14 +44,14 @@ router.patch("/profile/step2", companyController.updateCompanyProfile);
 
 // Uploads
 router.post(
-  "/profile/step3", 
-  upload.single("verificationDocument"), 
+  "/profile/step3",
+  upload.single("verificationDocument"),
   companyController.uploadVerificationDoc
 );
 
 router.post(
-  "/profile/logo", 
-  upload.single("logoFile"), 
+  "/profile/logo",
+  upload.single("logoFile"),
   companyController.uploadCompanyLogo
 );
 
