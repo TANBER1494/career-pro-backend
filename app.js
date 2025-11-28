@@ -25,7 +25,7 @@ app.use(express.json());
 app.use("/api/v1/auth", authRouter);
 app.use("/api/v1/job-seeker", jobSeekerRouter);
 app.use("/api/v1/admin", adminRouter);
-app.use("/api/v1/company", companyRouter);
+app.use("/api/v1/companies", companyRouter);
 app.use("/api/v1/jobs", jobRouter);
 app.use("/api/v1/applications", applicationRouter);
 
