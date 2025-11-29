@@ -6,6 +6,7 @@ const router = express.Router();
 router.post("/signup", authController.signup);
 router.post("/login", authController.login);
 router.post("/verify-email", authController.verifyEmail);
+router.post("/resend-code", authController.resendVerificationCode);
 
 // Test Protected Route
 router.get("/test-protect", authMiddleware.protect, (req, res) => {

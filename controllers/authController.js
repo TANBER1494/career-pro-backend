@@ -228,3 +228,43 @@ exports.getMe = catchAsync(async (req, res, next) => {
     },
   });
 });
+
+exports.resendVerificationCode = catchAsync(async (req, res, next) => {
+  const { email } = req.body;
+
+  // 1. Check if user exists
+  const user = await Authentication.findOne({ email });
+  if (!user) {
+    return next(new AppError("User not found", 404));
+  }
+
+  // 2. Check if already verified
+  if (user.isVerified) {
+    return next(
+      new AppError("This account is already verified. Please login.", 400)
+    );
+  }
+
+  // 3. Generate New Code
+  const verificationCode = Math.floor(
+    100000 + Math.random() * 900000
+  ).toString();
+  const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes from now
+
+  // 4. Save New Token
+  // (Note: We don't need to delete old tokens, but you can if you want to keep DB clean)
+  await AuthToken.create({
+    authId: user._id,
+    token: verificationCode,
+    tokenType: "email_verification",
+    expiresAt,
+  });
+
+  // 5. Send Email (Simulated)
+  console.log(`🔄 RESEND VERIFICATION CODE FOR ${email}: ${verificationCode}`);
+
+  res.status(200).json({
+    status: "success",
+    message: "Verification code sent successfully.",
+  });
+});
