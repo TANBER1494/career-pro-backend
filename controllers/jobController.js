@@ -365,3 +365,28 @@ exports.getJobDetails = catchAsync(async (req, res, next) => {
     },
   });
 });
+
+// exports.getCompanyJobs
+exports.getCompanyJobs = catchAsync(async (req, res, next) => {
+  // 1. Get Current Company
+  const company = await getCurrentCompany(req.user.id);
+
+  // 2. Build Query (Filter by Company ID)
+  const queryObj = { companyId: company._id };
+
+  // Optional: Filter by status (Active, Closed, etc.)
+  if (req.query.status && req.query.status !== "all") {
+    queryObj.status = req.query.status;
+  }
+
+  // 3. Execute Query
+  const jobs = await Job.find(queryObj).sort({ createdAt: -1 });
+
+  res.status(200).json({
+    status: "success",
+    results: jobs.length,
+    data: {
+      jobs,
+    },
+  });
+});
