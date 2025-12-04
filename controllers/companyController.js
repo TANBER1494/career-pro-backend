@@ -1,10 +1,10 @@
 const Company = require("../models/Company");
 const CompanyVerificationDocument = require("../models/CompanyVerificationDocument");
-const catchAsync = require("../utils/catchAsync");
-const AppError = require("../utils/AppError");
+const Authentication = require("../models/Authentication"); // نحتاجه لتحديث خطوات التسجيل
 const Job = require("../models/Job");
 const JobApplication = require("../models/JobApplication");
-Authentication = require("../models/Authentication");
+const catchAsync = require("../utils/catchAsync");
+const AppError = require("../utils/AppError");
 
 // --- Helper: Get Company Document from Auth ID ---
 const getCurrentCompany = async (authId) => {
@@ -26,7 +26,7 @@ exports.updateCompanyProfile = catchAsync(async (req, res, next) => {
   const company = await getCurrentCompany(req.user.id);
 
   const {
-    // Step 1 Fields
+    companyName,
     numberOfEmployees,
     location,
     industry,
@@ -46,6 +46,9 @@ exports.updateCompanyProfile = catchAsync(async (req, res, next) => {
   const updateData = {};
 
   // --- Mapping Step 1 ---
+  // ✅ تصحيح: إضافة منطق تحديث الاسم
+  if (companyName) updateData.companyName = companyName;
+
   if (location) updateData.location = location;
   if (industry) updateData.industry = industry;
   if (foundedYear) updateData.foundedYear = foundedYear;
@@ -77,13 +80,9 @@ exports.updateCompanyProfile = catchAsync(async (req, res, next) => {
     }
   );
 
+  // Registration Step Tracking Logic
   const isStep2Update =
     technologies || benefits || linkedin || twitter || facebook || instagram;
-
-  // ============================================================
-  // ✅ Registration Step Tracking Logic (New Addition)
-  // ============================================================
-  const Authentication = require("../models/Authentication");
 
   if (isStep2Update) {
     await Authentication.findByIdAndUpdate(req.user.id, {
@@ -94,7 +93,6 @@ exports.updateCompanyProfile = catchAsync(async (req, res, next) => {
       registrationStep: 2,
     });
   }
-  // ============================================================
 
   // Dynamic Response Construction
   let responsePayload = {};
@@ -112,6 +110,7 @@ exports.updateCompanyProfile = catchAsync(async (req, res, next) => {
   } else {
     responsePayload = {
       companyInfo: {
+        companyName: updatedCompany.companyName, // ✅ إرجاع الاسم الجديد للتأكيد
         location: updatedCompany.location,
         industry: updatedCompany.industry,
         foundedYear: updatedCompany.foundedYear,
@@ -141,6 +140,7 @@ exports.getCompanyProfile = catchAsync(async (req, res, next) => {
     status: "success",
     data: {
       companyInfo: {
+        companyName: company.companyName, // هذا هو الحقل الذي سيظهر كعنوان رئيسي
         location: company.location,
         industry: company.industry,
         foundedYear: company.foundedYear,
@@ -148,6 +148,7 @@ exports.getCompanyProfile = catchAsync(async (req, res, next) => {
         phone: company.phone,
         website: company.website,
         companyDescription: company.companyDescription,
+        logoUrl: company.logoUrl, // تأكدنا من إرسال اللوجو هنا
       },
       companyDetails: {
         technologies: company.technologies,
@@ -169,15 +170,20 @@ exports.uploadCompanyLogo = catchAsync(async (req, res, next) => {
   }
 
   // 2. Path Formatting
+  // إزالة public وتوحيد الشرطات لضمان عمل الرابط في الفرونت
   let logoUrl = req.file.path.replace("public", "").replace(/\\/g, "/");
-  // Ensure it doesn't start with double slashes if public wasn't there
-  if (!logoUrl.startsWith("/")) logoUrl = "/" + logoUrl; // Optional based on your static serve setup
 
-  // 3. Update DB (FIXED HERE) ✅
-  // Use findOneAndUpdate with authId OR get the company first
+  // التأكد من أن المسار يبدأ بـ / (أو uploads مباشرة حسب إعدادات السيرفر الاستاتيك)
+  // إذا كنت تخدم ملفات static من الروت، فغالباً تحتاج /uploads/...
+  if (!logoUrl.startsWith("/") && !logoUrl.startsWith("http")) {
+    logoUrl = "/" + logoUrl;
+  }
+
+  // 3. Update DB
+  // نستخدم authId للبحث عن الشركة وتحديث اللوجو
   const updatedCompany = await Company.findOneAndUpdate(
-    { authId: req.user.id }, // Search by Auth ID
-    { logoUrl: logoUrl }, // Correct field name (logoUrl not logo)
+    { authId: req.user.id },
+    { logoUrl: logoUrl },
     { new: true, runValidators: true }
   );
 
@@ -202,7 +208,7 @@ exports.uploadVerificationDoc = catchAsync(async (req, res, next) => {
     return next(new AppError("Please upload the verification file", 400));
   }
 
-  // Optional: Delete previous pending documents to ensure only one active file exists
+  // Optional: Delete previous pending documents
   await CompanyVerificationDocument.deleteMany({
     companyId: company._id,
     verificationStatus: { $in: ["pending", "rejected"] },
@@ -210,8 +216,7 @@ exports.uploadVerificationDoc = catchAsync(async (req, res, next) => {
 
   const newDoc = await CompanyVerificationDocument.create({
     companyId: company._id,
-    // We default to one type since it's now a single file requirement
-    documentType: "business_registration_certificate",
+    documentType: "business_registration_certificate", // Default single type
     fileName: req.file.originalname,
     filePath: req.file.path.replace(/\\/g, "/"),
     fileType: req.file.mimetype.split("/")[1] || "pdf",
@@ -219,12 +224,12 @@ exports.uploadVerificationDoc = catchAsync(async (req, res, next) => {
     verificationStatus: "pending",
   });
 
-  // Update company status to indicate review is in progress
+  // Update company status
   company.verificationStatus = "in_progress";
-  // Since it's a single file, uploading it means 100% of "uploading" is done
   company.verificationProgress = 100;
   await company.save();
 
+  // Update Auth Step
   await Authentication.findByIdAndUpdate(req.user.id, { registrationStep: 4 });
 
   res.status(200).json({
@@ -248,7 +253,7 @@ exports.getCompanyStats = catchAsync(async (req, res, next) => {
     status: "published",
     isActive: true,
   });
-  // Note: This is a simplified query. Real recruiting count might differ based on logic.
+
   const totalApplicationsCount = await JobApplication.countDocuments({
     jobId: { $in: await Job.find({ companyId: company._id }).distinct("_id") },
   });
@@ -257,12 +262,7 @@ exports.getCompanyStats = catchAsync(async (req, res, next) => {
   const recentJobs = await Job.find({ companyId: company._id })
     .sort({ createdAt: -1 })
     .limit(3)
-    .select("title status postedDate views"); // Add views to schema if needed
-
-  // 3. Get Recent Applications (Limit 3)
-  // This requires a complex join (Lookup), for now let's mock or keep it simple query
-  // We need application -> job (to check company) -> seeker
-  // For MVP/Sprint 1 performance, you might do this in a separate aggregation or optimized query later.
+    .select("title status postedDate views");
 
   res.status(200).json({
     status: "success",
@@ -271,12 +271,11 @@ exports.getCompanyStats = catchAsync(async (req, res, next) => {
       verificationStatus: company.verificationStatus,
       stats: {
         activeJobs: activeJobsCount,
-        currentlyRecruiting: activeJobsCount, // logic can be refined
+        currentlyRecruiting: activeJobsCount,
         totalApplications: totalApplicationsCount,
-        pendingReviews: 0, // Needs query on applications status
+        pendingReviews: 0,
       },
       recentJobs,
-      // recentApplications: [] // Populate this when applicationController is fully ready
     },
   });
 });
