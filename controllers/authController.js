@@ -190,6 +190,7 @@ exports.login = catchAsync(async (req, res, next) => {
         email: user.email,
         accountType: user.accountType,
         isVerified: user.isVerified,
+        registrationStep: user.registrationStep, // ✅ الإضافة الضرورية هنا
       },
     },
   });
@@ -245,14 +246,19 @@ exports.resendVerificationCode = catchAsync(async (req, res, next) => {
     );
   }
 
+  // 🛑 التعديل الجديد: حذف أي كود تفعيل قديم لهذا المستخدم
+  await AuthToken.deleteMany({
+    authId: user._id,
+    tokenType: "email_verification",
+  });
+
   // 3. Generate New Code
   const verificationCode = Math.floor(
     100000 + Math.random() * 900000
   ).toString();
-  const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes from now
+  const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
 
   // 4. Save New Token
-  // (Note: We don't need to delete old tokens, but you can if you want to keep DB clean)
   await AuthToken.create({
     authId: user._id,
     token: verificationCode,
@@ -260,7 +266,7 @@ exports.resendVerificationCode = catchAsync(async (req, res, next) => {
     expiresAt,
   });
 
-  // 5. Send Email (Simulated)
+  // 5. Send Email
   console.log(`🔄 RESEND VERIFICATION CODE FOR ${email}: ${verificationCode}`);
 
   res.status(200).json({

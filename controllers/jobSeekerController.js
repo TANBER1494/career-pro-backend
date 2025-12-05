@@ -1,5 +1,6 @@
 const JobSeeker = require("../models/JobSeeker");
 const CvUpload = require("../models/CvUpload");
+const Authentication = require("../models/Authentication");
 const catchAsync = require("../utils/catchAsync");
 const AppError = require("../utils/AppError");
 
