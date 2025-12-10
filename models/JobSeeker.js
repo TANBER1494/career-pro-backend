@@ -2,87 +2,134 @@ const mongoose = require("mongoose");
 
 const jobSeekerSchema = new mongoose.Schema(
   {
-    // Link to Authentication Table (One-to-One Relationship)
+    // ربط المستخدم بجدول المصادقة (Auth)
     authId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Authentication",
       required: [true, "Auth ID is required"],
-      unique: true, // Ensures one profile per user
+      unique: true,
     },
 
-    savedJobs: [
-      {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "Job",
-      },
-    ],
-
+    // --- Basic Information ---
     fullName: {
       type: String,
-      required: [true, "Full name is required"],
       trim: true,
+      default: "",
     },
     jobTitle: {
       type: String,
       trim: true,
+      default: "",
     },
+    summary: {
+      type: String,
+      trim: true, // Professional Summary / Bio
+    },
+
+    // --- Contact Info ---
     phone: {
+      type: String,
+      trim: true,
+    },
+    country: {
+      type: String,
+      trim: true,
+    },
+    city: {
       type: String,
       trim: true,
     },
     location: {
       type: String,
-      trim: true,
+      trim: true, // يمكن استخدامه لتخزين "City, Country" مدمجة
     },
-    // Educational Info
-    degree: String,
-    university: String,
-    graduationYear: Number,
 
-    // Personal Info
-    birthDate: Date,
+    // --- Personal Details ---
+    birthDate: {
+      type: Date,
+    },
     gender: {
       type: String,
-      enum: ["male", "female", "other"],
+      enum: ["male", "female", "other", "prefer_not_to_say"],
+      lowercase: true, // لضمان التوافق مع الفرونت إند (Male -> male)
     },
 
-    // Professional Details
+    // --- Career Details ---
+    experienceLevel: {
+      type: String, // e.g., "Mid-Level", "Senior", "Intern"
+      trim: true,
+    },
     yearsOfExperience: {
       type: Number,
       default: 0,
     },
-    industry: String,
-    // Saved Jobs (Array of Job IDs)
+    industry: {
+      type: String,
+      trim: true,
+    },
+
+    // --- Education ---
+    degree: {
+      type: String, // e.g., "Bachelor's", "Master's"
+      trim: true,
+    },
+    university: {
+      type: String,
+      trim: true,
+    },
+    graduationYear: {
+      type: Number,
+    },
+    gpa: {
+      type: Number,
+    },
+
+    // --- Preferences ---
+    workType: {
+      type: String,
+      // القيم المسموحة بناءً على القوائم في الفرونت إند
+      // (Full Time, Part Time, Contract, Internship, etc.)
+      trim: true,
+    },
+    workPlace: {
+      type: String,
+      // (On-Site, Remote, Hybrid)
+      trim: true,
+    },
+
+    // --- Social Links ---
+    linkedin: {
+      type: String,
+      trim: true,
+    },
+    personalWebsite: {
+      type: String, // Portfolio
+      trim: true,
+    },
+
+    // --- System / Features ---
     savedJobs: [
       {
         type: mongoose.Schema.Types.ObjectId,
         ref: "Job",
       },
     ],
-    // Work Preferences
-    workType: {
-      type: String,
-      enum: ["Full Time", "Part Time", "Contract", "Internship"],
-    },
-    workPlace: {
-      type: String,
-      enum: ["remote", "on_site", "hybrid"],
-    },
 
-    // AI Generated Data (Flexible JSON)
+    // حقل لتخزين نتائج تحليل الشخصية بالذكاء الاصطناعي مستقبلاً
     personalityProfile: {
-      type: Map, // Using Map for flexible JSON data
-      of: String, // Or Mixed if structure varies greatly
+      type: Map,
+      of: String,
     },
   },
   {
-    timestamps: true, // createdAt, updatedAt
+    timestamps: true, // يضيف createdAt و updatedAt تلقائياً
   }
 );
 
-// Index for faster search by location or job title
-jobSeekerSchema.index({ location: 1 });
+// إضافة Index للبحث السريع
 jobSeekerSchema.index({ jobTitle: 1 });
+jobSeekerSchema.index({ location: 1 });
+jobSeekerSchema.index({ industry: 1 });
 
 const JobSeeker = mongoose.model("JobSeeker", jobSeekerSchema);
 
