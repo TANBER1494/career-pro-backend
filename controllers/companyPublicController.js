@@ -58,17 +58,17 @@ exports.getAllCompanies = catchAsync(async (req, res, next) => {
   // --- Sorting (ADDED FIX) ---
   // Always add a default sort to ensure consistent pagination
   if (req.query.sort) {
-    const sortBy = req.query.sort.split(',').join(' ');
+    const sortBy = req.query.sort.split(",").join(" ");
     query = query.sort(sortBy);
   } else {
-    query = query.sort('-createdAt'); // Default: Newest first
+    query = query.sort("-createdAt"); // Default: Newest first
   }
 
   // --- Pagination ---
   const page = req.query.page * 1 || 1;
-  const limit = req.query.limit * 1 || 12; // 12 Cards per page
+  const limit = req.query.limit * 1 || 50;
   const skip = (page - 1) * limit;
-  
+
   query = query.skip(skip).limit(limit);
 
   // Execute Query
