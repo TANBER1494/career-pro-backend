@@ -4,6 +4,7 @@ const upload = require("../utils/fileUpload");
 const authMiddleware = require("../middlewares/authMiddleware");
 const router = express.Router();
 const applicationController = require("../controllers/applicationController");
+const authController = require("../controllers/authController");
 
 router.use(authMiddleware.protect);
 router.use(authMiddleware.restrictTo("job_seeker"));
@@ -19,6 +20,7 @@ router.post(
 );
 router.get("/profile", jobSeekerController.getMe);
 // GET /api/v1/job-seeker/applications
+router.get("/saved-jobs", jobSeekerController.getSavedJobs);
 router.get("/applications", applicationController.getSeekerApplications);
 
 module.exports = router;

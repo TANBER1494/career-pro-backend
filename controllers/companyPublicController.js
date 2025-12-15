@@ -7,16 +7,37 @@ const AppError = require("../utils/AppError");
 // 1. Get Top Companies (Random 6 Verified Companies)
 // ============================================================
 exports.getTopCompanies = catchAsync(async (req, res, next) => {
-  // Use Aggregation to select random documents efficiently
   const companies = await Company.aggregate([
-    // 1) Filter: Get only verified companies (To showcase the best)
-    // Note: If DB is empty/has no verified companies, comment this out for testing
+    // 1) Filter: Verified Only
     { $match: { isVerified: true } },
 
-    // 2) Sample: Select 6 random documents
+    // 2) Sample: Select 6 random
     { $sample: { size: 6 } },
 
-    // 3) Project: Select only public-facing fields
+    {
+      $lookup: {
+        from: "jobs",
+        let: { companyId: "$_id" },
+        pipeline: [
+          {
+            $match: {
+              $expr: { $eq: ["$companyId", "$$companyId"] },
+              status: "published",
+            },
+          },
+        ],
+        as: "activeJobs",
+      },
+    },
+
+    // 4) Add Field: Count the jobs
+    {
+      $addFields: {
+        openPositionsCount: { $size: "$activeJobs" },
+      },
+    },
+
+    // 5) Project: Select fields
     {
       $project: {
         _id: 1,
@@ -25,6 +46,7 @@ exports.getTopCompanies = catchAsync(async (req, res, next) => {
         industry: 1,
         location: 1,
         isVerified: 1,
+        openPositionsCount: 1, // ✅ نرجع العدد
       },
     },
   ]);
@@ -50,18 +72,17 @@ exports.getAllCompanies = catchAsync(async (req, res, next) => {
     queryObj.companyName = { $regex: req.query.search, $options: "i" };
   }
 
-  // Initialize Query with field selection
+  // Query Setup
   let query = Company.find(queryObj).select(
     "companyName logoUrl industry location companySize isVerified"
   );
 
-  // --- Sorting (ADDED FIX) ---
-  // Always add a default sort to ensure consistent pagination
+  // --- Sorting ---
   if (req.query.sort) {
     const sortBy = req.query.sort.split(",").join(" ");
     query = query.sort(sortBy);
   } else {
-    query = query.sort("-createdAt"); // Default: Newest first
+    query = query.sort("-createdAt");
   }
 
   // --- Pagination ---
@@ -71,31 +92,44 @@ exports.getAllCompanies = catchAsync(async (req, res, next) => {
 
   query = query.skip(skip).limit(limit);
 
-  // Execute Query
+  // Execute Query (Get Companies)
   const companies = await query;
+
+  // ACTION: Count Jobs for each company (Manual Population)
+  const companiesWithCounts = await Promise.all(
+    companies.map(async (comp) => {
+      // نعد الوظائف المنشورة لهذه الشركة
+      const count = await Job.countDocuments({
+        companyId: comp._id,
+        status: "published",
+      });
+
+      // نحول مستند Mongoose إلى Object عادي ونضيف العدد
+      const compObj = comp.toObject();
+      compObj.openPositionsCount = count;
+      return compObj;
+    })
+  );
 
   res.status(200).json({
     status: "success",
-    results: companies.length,
-    data: { companies },
+    results: companiesWithCounts.length,
+    data: { companies: companiesWithCounts },
   });
 });
 
 // ============================================================
-// 3. Get Company Details & Active Jobs (Public View)
+// 3. Get Company Details (No Change needed here)
 // ============================================================
 exports.getCompanyDetails = catchAsync(async (req, res, next) => {
-  // A) Get Company Data
   const company = await Company.findById(req.params.id).select(
     "-authId -verificationProgress -verificationStatus"
-  ); // Exclude sensitive/internal data
+  );
 
   if (!company) {
     return next(new AppError("Company not found", 404));
   }
 
-  // B) Get Company's Active Jobs
-  // Note: Select fields relevant for the "Job Card" view
   const companyJobs = await Job.find({
     companyId: company._id,
     status: "published",
@@ -105,7 +139,7 @@ exports.getCompanyDetails = catchAsync(async (req, res, next) => {
     status: "success",
     data: {
       company,
-      openPositions: companyJobs, // Renamed to match common UI patterns
+      openPositions: companyJobs,
     },
   });
 });
