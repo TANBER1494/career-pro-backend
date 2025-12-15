@@ -22,5 +22,5 @@ router.get("/profile", jobSeekerController.getMe);
 // GET /api/v1/job-seeker/applications
 router.get("/saved-jobs", jobSeekerController.getSavedJobs);
 router.get("/applications", applicationController.getSeekerApplications);
-
+router.delete("/applications/:appId", jobSeekerController.deleteApplication);
 module.exports = router;

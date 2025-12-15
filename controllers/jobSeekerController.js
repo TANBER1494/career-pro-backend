@@ -4,7 +4,7 @@ const Authentication = require("../models/Authentication");
 const catchAsync = require("../utils/catchAsync");
 const AppError = require("../utils/AppError");
 const Job = require("../models/Job");
-
+const Application = require("../models/JobApplication");
 // ============================================================
 // 1. Update Personal Info (Step 1)
 // ============================================================
@@ -239,8 +239,6 @@ exports.toggleSaveJob = catchAsync(async (req, res, next) => {
 });
 
 exports.getSavedJobs = catchAsync(async (req, res, next) => {
-  // 1. نحصل على بيانات المستخدم الحالي (لأن savedJobs عبارة عن IDs فقط)
-  // req.user.id قادمة من الـ Auth Middleware
   const seeker = await JobSeeker.findOne({ authId: req.user.id });
 
   if (!seeker) {
@@ -262,5 +260,38 @@ exports.getSavedJobs = catchAsync(async (req, res, next) => {
     data: {
       jobs: jobs, // الفرونت مستني data.jobs
     },
+  });
+});
+
+// ============================================================
+// Delete Application
+// ============================================================
+exports.deleteApplication = catchAsync(async (req, res, next) => {
+  const { appId } = req.params;
+
+  const seeker = await JobSeeker.findOne({ authId: req.user.id });
+
+  if (!seeker) {
+    return next(new AppError("Job Seeker profile not found.", 404));
+  }
+
+  const application = await Application.findOneAndDelete({
+    _id: appId,
+    seekerId: seeker._id,
+  });
+
+  if (!application) {
+    return next(
+      new AppError(
+        "Application not found or you are not authorized to delete it.",
+        404
+      )
+    );
+  }
+
+  // 3. الرد بنجاح
+  res.status(204).json({
+    status: "success",
+    data: null,
   });
 });
