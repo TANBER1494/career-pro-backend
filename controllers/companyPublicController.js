@@ -46,7 +46,8 @@ exports.getTopCompanies = catchAsync(async (req, res, next) => {
         industry: 1,
         location: 1,
         isVerified: 1,
-        openPositionsCount: 1, // ✅ نرجع العدد
+        openPositionsCount: 1,
+        companyDescription: 1,
       },
     },
   ]);
@@ -74,7 +75,7 @@ exports.getAllCompanies = catchAsync(async (req, res, next) => {
 
   // Query Setup
   let query = Company.find(queryObj).select(
-    "companyName logoUrl industry location companySize isVerified"
+    "companyName logoUrl industry location companySize isVerified companyDescription"
   );
 
   // --- Sorting ---
