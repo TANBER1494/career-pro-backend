@@ -4,6 +4,7 @@ const cors = require("cors");
 const AppError = require("./utils/AppError");
 const adminRouter = require("./routes/adminRoutes");
 const globalErrorHandler = require("./controllers/errorController");
+const path = require("path");
 
 // Import Routes
 const authRouter = require("./routes/authRoutes");
@@ -20,6 +21,8 @@ if (process.env.NODE_ENV === "development") {
 }
 app.use(cors());
 app.use(express.json());
+
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 // Routes Mounting
 app.use("/api/v1/auth", authRouter);
