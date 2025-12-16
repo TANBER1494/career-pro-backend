@@ -5,6 +5,7 @@ const Company = require("../models/Company");
 const AuthToken = require("../models/AuthToken");
 const catchAsync = require("../utils/catchAsync");
 const AppError = require("../utils/AppError");
+const crypto = require("crypto");
 
 // Helper Function to generate JWT
 const signToken = (id) => {
@@ -272,5 +273,143 @@ exports.resendVerificationCode = catchAsync(async (req, res, next) => {
   res.status(200).json({
     status: "success",
     message: "Verification code sent successfully.",
+  });
+});
+
+// ============================================================
+// Password Reset Logic
+// ============================================================
+
+exports.forgotPassword = catchAsync(async (req, res, next) => {
+  const { email } = req.body;
+  const user = await Authentication.findOne({ email });
+
+  if (!user) {
+    return next(new AppError("There is no user with that email address.", 404));
+  }
+
+  // 1. Rate Limiting Check (التحقق من التكرار)
+  const lastToken = await AuthToken.findOne({
+    authId: user._id,
+    tokenType: "password_reset",
+    used: false,
+    expiresAt: { $gt: Date.now() }, // ما زال سارياً
+  }).sort({ createdAt: -1 }); // نأخذ الأحدث
+
+  if (lastToken) {
+    // نحسب الفرق بين الوقت الحالي ووقت إنشاء التوكن السابق
+    const timeSinceLastRequest =
+      (Date.now() - new Date(lastToken.createdAt).getTime()) / 1000;
+
+    // مثلاً نضع حد أدنى 60 ثانية بين كل طلب
+    const COOLDOWN_SECONDS = 60;
+
+    if (timeSinceLastRequest < COOLDOWN_SECONDS) {
+      const waitTime = Math.ceil(COOLDOWN_SECONDS - timeSinceLastRequest);
+      return next(
+        new AppError(
+          `Please wait ${waitTime} seconds before requesting a new link.`,
+          429
+        )
+      );
+    }
+  }
+
+  // 2. Generate random reset token
+  // نستخدم crypto لعمل توكن عشوائي قوي
+  const resetToken = crypto.randomBytes(32).toString("hex");
+
+  // 3. Set expiration (e.g., 1 hour)
+  const expiresAt = new Date(Date.now() + 60 * 60 * 1000);
+
+  // 4. Save token to DB
+  await AuthToken.create({
+    authId: user._id,
+    token: resetToken,
+    tokenType: "password_reset", // ✅ نستخدم النوع الموجود في الداتابيز
+    expiresAt,
+  });
+
+  const resetURL = `http://localhost:5173/src/pages/auth/reset-password.html?token=${resetToken}`;
+  // 6. Send Email (Simulated)
+  const message = `Forgot your password? Submit your new password via this link: ${resetURL}.\nIf you didn't forget your password, please ignore this email!`;
+
+  console.log("📧 =========================================");
+  console.log(`📧 PASSWORD RESET LINK FOR ${email}:`);
+  console.log(`🔗 ${resetURL}`);
+  console.log("📧 =========================================");
+
+  res.status(200).json({
+    status: "success",
+    message: "Token sent to email!",
+  });
+});
+
+exports.resetPassword = catchAsync(async (req, res, next) => {
+  const { token } = req.params;
+  const { password, passwordConfirm } = req.body;
+
+  // 1. Find Token (كما هو)
+  const tokenDoc = await AuthToken.findOne({
+    token: token,
+    tokenType: "password_reset",
+    isUsed: false,
+    expiresAt: { $gt: Date.now() },
+  });
+
+  if (!tokenDoc) {
+    return next(new AppError("Token is invalid or has expired", 400));
+  }
+
+  // 2. Passwords Match (كما هو)
+  if (password !== passwordConfirm) {
+    return next(new AppError("Passwords do not match", 400));
+  }
+
+  // 3. Find User (كما هو)
+  const user = await Authentication.findById(tokenDoc.authId).select(
+    "+password"
+  ); // تأكد من جلب الباسورد
+  if (!user) {
+    return next(new AppError("User not found.", 404));
+  }
+
+  // 4. Check if new password is same as old (الإضافة الجديدة)
+  // نستخدم دالة المقارنة الموجودة في الموديل (أو bcrypt مباشرة)
+  const isSamePassword = await user.correctPassword(password, user.password);
+
+  if (isSamePassword) {
+    return next(
+      new AppError(
+        "New password cannot be the same as your old password. Please choose a different one.",
+        400
+      )
+    );
+  }
+
+  // 5. Update Password (كما هو)
+  user.password = password;
+  await user.save();
+
+  // 6. Mark Token Used (كما هو)
+  tokenDoc.isUsed = true;
+  await tokenDoc.save();
+
+  const jwtToken = signToken(user._id);
+
+  res.status(200).json({
+    status: "success",
+    message: "Password updated successfully!",
+    token: jwtToken,
+    // نضيف نوع الحساب عشان الفرونت يعرف يوجه فين
+    data: {
+      user: {
+        id: user._id,
+        email: user.email,
+        accountType: user.accountType,
+        isVerified: user.isVerified,
+        registrationStep: user.registrationStep, // مهم جداً للمشكلة الثالثة
+      },
+    },
   });
 });

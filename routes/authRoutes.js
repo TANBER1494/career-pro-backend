@@ -8,6 +8,9 @@ router.post("/login", authController.login);
 router.post("/verify-email", authController.verifyEmail);
 router.post("/resend-code", authController.resendVerificationCode);
 
+router.post("/forgot-password", authController.forgotPassword);
+router.patch("/reset-password/:token", authController.resetPassword);
+
 // Test Protected Route
 router.get("/test-protect", authMiddleware.protect, (req, res) => {
   res.status(200).json({
