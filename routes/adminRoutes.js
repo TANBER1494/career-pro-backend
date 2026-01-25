@@ -14,8 +14,10 @@ router.patch(
 );
 
 router.get('/stats', adminController.getDashboardStats);
-router.get('/users', adminController.getAllUsers);
-router.delete('/users/:id', adminController.deleteUser);
+router.get("/users/seekers", adminController.getJobSeekers);
+router.get("/users/companies", adminController.getCompanies);
+
+router.delete("/users/:id", adminController.deleteUser);
 
 router.get("/jobs", adminController.getAllJobs);
 router.delete("/jobs/:id", adminController.deleteJob);

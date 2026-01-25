@@ -118,52 +118,98 @@ exports.getDashboardStats = catchAsync(async (req, res, next) => {
 });
 
 // ============================================================
-// 4. Get All Users (For Admin Panel)
+// 4. Get Job Seekers (With Full Details)
 // ============================================================
+exports.getJobSeekers = catchAsync(async (req, res, next) => {
+  const { search } = req.query;
 
-exports.getAllUsers = catchAsync(async (req, res, next) => {
-  let filter = { accountType: { $ne: 'admin' } };
+  let query = JobSeeker.find().populate({
+    path: "authId",
+    select: "email isVerified createdAt", 
+  });
 
-  if (req.query.search) {
-    filter.email = { $regex: req.query.search, $options: 'i' }; // 'i' تعني غير حساس لحالة الأحرف
+  if (search) {
+    query = query.find({
+      $or: [
+        { firstName: { $regex: search, $options: "i" } },
+        { lastName: { $regex: search, $options: "i" } },
+        { fullName: { $regex: search, $options: "i" } } 
+      ]
+    });
   }
 
-  const users = await Authentication.find(filter)
-    .select('-password')
-    .sort('-createdAt');
+  const seekers = await query.sort("-createdAt");
+
+  const cleanSeekers = seekers.filter(item => item.authId);
 
   res.status(200).json({
-    status: 'success',
-    results: users.length,
+    status: "success",
+    results: cleanSeekers.length,
     data: {
-      users,
+      users: cleanSeekers,
     },
   });
 });
 
 // ============================================================
-// 5. Delete User (Ban/Remove)
+// 5. Get Companies (With Verification Statuses)
 // ============================================================
-exports.deleteUser = catchAsync(async (req, res, next) => {
-  const { id } = req.params;
+exports.getCompanies = catchAsync(async (req, res, next) => {
+  const { search } = req.query;
 
-  const user = await Authentication.findByIdAndDelete(id);
+  let query = Company.find().populate({
+    path: "authId",
+    select: "email isVerified createdAt",
+  });
 
-  if (!user) {
-    return next(new AppError('No user found with that ID', 404));
+  if (search) {
+    query = query.find({ companyName: { $regex: search, $options: "i" } });
   }
 
-  if (user.accountType === 'job_seeker') {
+  const companies = await query.sort("-createdAt");
+  const cleanCompanies = companies.filter(item => item.authId);
+
+  res.status(200).json({
+    status: "success",
+    results: cleanCompanies.length,
+    data: {
+      users: cleanCompanies,
+    },
+  });
+});
+
+// ============================================================
+// 6. Delete User (Updated to handle ID from different collections)
+// ============================================================
+exports.deleteUser = catchAsync(async (req, res, next) => {
+  const { id } = req.params; 
+  const { type } = req.query; 
+
+  let authIdToDelete = id;
+
+  if (type === 'job_seeker') {
+      const seeker = await JobSeeker.findById(id);
+      if (seeker) authIdToDelete = seeker.authId;
+  } else if (type === 'company') {
+      const company = await Company.findById(id);
+      if (company) authIdToDelete = company.authId;
+  }
+
+  const user = await Authentication.findByIdAndDelete(authIdToDelete);
+
+  if (!user) {
+    return next(new AppError("No user found with that ID", 404));
+  }
+
+  if (user.accountType === "job_seeker") {
     await JobSeeker.findOneAndDelete({ authId: user._id });
-  } else if (user.accountType === 'company') {
-    const company = await Company.findOneAndDelete({ authId: user._id });
-    if (company) {
-      await Job.deleteMany({ companyId: company._id });
-    }
+  } else if (user.accountType === "company") {
+    const comp = await Company.findOneAndDelete({ authId: user._id });
+    if (comp) await Job.deleteMany({ companyId: comp._id });
   }
 
   res.status(204).json({
-    status: 'success',
+    status: "success",
     data: null,
   });
 });
