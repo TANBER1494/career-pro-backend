@@ -1,10 +1,18 @@
 const express = require("express");
 const morgan = require("morgan");
 const cors = require("cors");
+const path = require("path");
+
+// Core Security Modules
+const helmet = require("helmet");
+const rateLimit = require("express-rate-limit");
+const mongoSanitize = require("express-mongo-sanitize");
+const hpp = require("hpp");
+
+// Custom Modules
 const AppError = require("./utils/AppError");
 const adminRouter = require("./routes/adminRoutes");
 const globalErrorHandler = require("./controllers/errorController");
-const path = require("path");
 
 // Import Routes
 const authRouter = require("./routes/authRoutes");
@@ -15,16 +23,63 @@ const applicationRouter = require("./routes/applicationRoutes");
 
 const app = express();
 
-// Middlewares
+// ================= CORE MIDDLEWARE STACK =================
+
+// 1. Set Security HTTP Headers
+app.use(helmet());
+app.use(helmet.crossOriginResourcePolicy({ policy: "cross-origin" }));
+
+// 2. CORS Configuration (Crucial for Vanilla JS Fetch/XHR)
+app.use(cors({
+  origin: '*', // For testing. Will be updated later.
+  credentials: true
+}));
+
+// 3. Development Request Logging
 if (process.env.NODE_ENV === "development") {
   app.use(morgan("dev"));
 }
-app.use(cors());
-app.use(express.json());
 
+// 4. Rate Limiting
+const limiter = rateLimit({
+  max: 1000,
+  windowMs: 60 * 60 * 1000, 
+  message: "Too many requests from this IP, please try again in an hour!"
+});
+app.use("/api", limiter);
+
+// 5. Body Parsers (CRITICAL FOR VANILLA JS)
+// - Parses application/json (fetch API with JSON stringify)
+app.use(express.json({ limit: "10kb" }));
+// - Parses application/x-www-form-urlencoded (Standard HTML Forms & FormData)
+app.use(express.urlencoded({ extended: true, limit: "10kb" }));
+
+// 6. CUSTOM NoSQL Injection Sanitizer (The Fix)
+// Bypasses the "getter-only" Express error by mutating keys instead of the object
+app.use((req, res, next) => {
+  if (req.body) req.body = mongoSanitize.sanitize(req.body);
+  if (req.params) req.params = mongoSanitize.sanitize(req.params);
+  
+  if (req.query) {
+    // Sanitize the data first
+    const cleanedQuery = mongoSanitize.sanitize(req.query);
+    // Clear the existing keys safely
+    for (const key in req.query) {
+      delete req.query[key];
+    }
+    // Assign the cleaned data back into the read-only object
+    Object.assign(req.query, cleanedQuery);
+  }
+  next();
+});
+
+// 7. HTTP Parameter Pollution Prevention
+app.use(hpp());
+
+// 8. Static File Serving
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
-// Routes Mounting
+// ================= ROUTES MOUNTING =================
 app.use("/api/v1/auth", authRouter);
 app.use("/api/v1/job-seeker", jobSeekerRouter);
 app.use("/api/v1/admin", adminRouter);
@@ -32,12 +87,11 @@ app.use("/api/v1/companies", companyRouter);
 app.use("/api/v1/jobs", jobRouter);
 app.use("/api/v1/applications", applicationRouter);
 
-// 404 Handler
+// ================= ERROR HANDLING =================
 app.all(/(.*)/, (req, res, next) => {
   next(new AppError(`Can't find ${req.originalUrl} on this server!`, 404));
 });
 
-// Global Error Handler
 app.use(globalErrorHandler);
 
 module.exports = app;

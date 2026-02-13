@@ -121,7 +121,7 @@ exports.uploadCV = catchAsync(async (req, res, next) => {
   const newCv = await CvUpload.create({
     seekerId: seeker._id,
     fileName: req.file.originalname,
-    filePath: req.file.path.replace(/\\/g, "/"), // إصلاح المسار للويندوز
+    filePath: req.file.path.replace(/\\/g, "/"), 
     fileType: req.file.mimetype.split("/")[1] || "pdf",
     fileSize: req.file.size,
     uploadStatus: "uploaded",

@@ -1,34 +1,50 @@
 const multer = require("multer");
-const AppError = require("./AppError");
+const cloudinary = require("cloudinary").v2;
+const { CloudinaryStorage } = require("multer-storage-cloudinary");
+const AppError = require("./AppError"); // Adjust path if needed
 
-// 1. Configure Storage (Where to save files)
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    // Determine folder based on file type or route
-    // You need to ensure these folders exist in your root directory
-    let folder = "uploads/";
+// ================= CLOUDINARY CONFIGURATION =================
+// Ensure your .env variables are loaded before this file runs
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+});
+
+// ================= 1. CONFIGURE STORAGE (Cloudinary) =================
+const storage = new CloudinaryStorage({
+  cloudinary: cloudinary,
+  params: async (req, file) => {
+    // Determine folder and resource type based on route/fieldname
+    let folderName = "careerpro/misc";
+    let resourceType = "auto"; // 'auto' allows PDFs, DOCX, and Images
 
     if (file.fieldname === "cvFile") {
-      folder = "uploads/cvs/";
+      folderName = "careerpro/cvs";
+      resourceType = "auto"; // For PDFs and Word Docs
     } else if (file.fieldname === "logoFile") {
-      folder = "uploads/images/";
+      folderName = "careerpro/images";
+      resourceType = "image"; // Strictly images
     } else if (file.fieldname === "verificationDocument") {
-      folder = "uploads/docs/";
+      folderName = "careerpro/docs";
+      resourceType = "auto"; // For PDFs and Docs
     }
 
-    cb(null, folder);
-  },
-  filename: (req, file, cb) => {
-    // Generate unique filename: user-userId-timestamp.ext
-    // e.g., user-60d5ec...-16400000.pdf
-    const ext = file.mimetype.split("/")[1];
-    // If request has user (from protect middleware), use id, else use 'guest'
+    // Generate unique filename identifier (public_id in Cloudinary)
+    // Note: Cloudinary automatically adds the correct extension (.pdf, .png)
     const userId = req.user ? req.user._id : "guest";
-    cb(null, `user-${userId}-${Date.now()}.${ext}`);
+    const publicId = `user-${userId}-${Date.now()}`;
+
+    return {
+      folder: folderName,
+      resource_type: resourceType,
+      public_id: publicId,
+    };
   },
 });
 
-// 2. File Filter (Security check)
+// ================= 2. FILE FILTER (Security Check) =================
+// Kept exactly as your original solid logic
 const fileFilter = (req, file, cb) => {
   if (
     file.fieldname === "cvFile" ||
@@ -63,7 +79,7 @@ const fileFilter = (req, file, cb) => {
   }
 };
 
-// 3. Export the Multer Instance
+// ================= 3. EXPORT MULTER INSTANCE =================
 const upload = multer({
   storage: storage,
   fileFilter: fileFilter,
