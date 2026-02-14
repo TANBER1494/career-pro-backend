@@ -31,7 +31,7 @@ app.use(helmet.crossOriginResourcePolicy({ policy: "cross-origin" }));
 
 // 2. CORS Configuration (Crucial for Vanilla JS Fetch/XHR)
 app.use(cors({
-  origin: 'https://career-pro-frontend.vercel.app/', // For testing. Will be updated later.
+  origin: 'https://career-pro-frontend.vercel.app', // For testing. Will be updated later.
   credentials: true
 }));
 
