@@ -31,7 +31,7 @@ app.use(helmet.crossOriginResourcePolicy({ policy: "cross-origin" }));
 
 // 2. CORS Configuration (Crucial for Vanilla JS Fetch/XHR)
 const allowedOrigins = [
-  'https://career-pro-frontend-deploy.vercel.app', // رابط موقعك على فيرسل
+  'https://aicareerpro.vercel.app', // رابط موقعك على فيرسل
   'http://localhost:5173',                  // رابط جهازك المحلي (Vite)
   'http://localhost:5500',                  // لو شغال بـ Live Server
   'http://127.0.0.1:5173'
