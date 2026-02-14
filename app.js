@@ -30,9 +30,25 @@ app.use(helmet());
 app.use(helmet.crossOriginResourcePolicy({ policy: "cross-origin" }));
 
 // 2. CORS Configuration (Crucial for Vanilla JS Fetch/XHR)
+const allowedOrigins = [
+  'https://career-pro-frontend.vercel.app', // رابط موقعك على فيرسل
+  'http://localhost:5173',                  // رابط جهازك المحلي (Vite)
+  'http://localhost:5500',                  // لو شغال بـ Live Server
+  'http://127.0.0.1:5173'
+];
+
 app.use(cors({
-  origin: 'https://career-pro-frontend.vercel.app', // For testing. Will be updated later.
-  credentials: true
+  origin: function (origin, callback) {
+    // السماح بالطلبات اللي ملهاش Origin (زي الـ Mobile apps أو Postman) 
+    // أو الطلبات اللي موجودة في القائمة بتاعتنا
+    if (!origin || allowedOrigins.indexOf(origin) !== -1) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS']
 }));
 
 // 3. Development Request Logging
