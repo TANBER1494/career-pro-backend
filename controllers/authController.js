@@ -306,8 +306,8 @@ exports.forgotPassword = catchAsync(async (req, res, next) => {
   });
 
   // ✅ استخدام رابط Vercel (Production)
-  const resetURL = `https://aicareerpro.vercel.app/src/pages/auth/reset-password.html?token=${resetToken}`;
-
+  const resetURL = `https://aicareerpro.vercel.app/reset-password?token=${resetToken}`;
+  
   // Custom HTML for Reset Email
   const resetHtml = `
     <!DOCTYPE html>
