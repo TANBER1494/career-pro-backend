@@ -6,7 +6,7 @@ const AuthToken = require('../models/AuthToken');
 const catchAsync = require('../utils/catchAsync');
 const AppError = require('../utils/AppError');
 const crypto = require('crypto');
-const sendEmail = require('../utils/email'); // 
+const sendEmail = require('../utils/email'); //
 
 // Helper Function to generate JWT
 const signToken = (id) => {
@@ -306,7 +306,7 @@ exports.forgotPassword = catchAsync(async (req, res, next) => {
   });
 
   // ✅ استخدام رابط Vercel (Production)
-  const resetURL = `https://aicareerpro.vercel.app.vercel.app/src/pages/auth/reset-password.html?token=${resetToken}`;
+  const resetURL = `https://aicareerpro.vercel.app/src/pages/auth/reset-password.html?token=${resetToken}`;
 
   // Custom HTML for Reset Email
   const resetHtml = `
