@@ -1,11 +1,12 @@
-const jwt = require("jsonwebtoken");
-const Authentication = require("../models/Authentication");
-const JobSeeker = require("../models/JobSeeker");
-const Company = require("../models/Company");
-const AuthToken = require("../models/AuthToken");
-const catchAsync = require("../utils/catchAsync");
-const AppError = require("../utils/AppError");
-const crypto = require("crypto");
+const jwt = require('jsonwebtoken');
+const Authentication = require('../models/Authentication');
+const JobSeeker = require('../models/JobSeeker');
+const Company = require('../models/Company');
+const AuthToken = require('../models/AuthToken');
+const catchAsync = require('../utils/catchAsync');
+const AppError = require('../utils/AppError');
+const crypto = require('crypto');
+const sendEmail = require('../utils/email'); // ✅ استدعاء دالة الإيميل (تأكد من وجود الملف في utils)
 
 // Helper Function to generate JWT
 const signToken = (id) => {
@@ -25,7 +26,6 @@ exports.signup = catchAsync(async (req, res, next) => {
     password,
     passwordConfirm,
     accountType,
-    // Dynamic fields based on account type
     firstName,
     lastName,
     companyName,
@@ -34,18 +34,18 @@ exports.signup = catchAsync(async (req, res, next) => {
 
   // 2. Check Passwords
   if (password !== passwordConfirm) {
-    return next(new AppError("Passwords do not match", 400));
+    return next(new AppError('Passwords do not match', 400));
   }
 
   // 3. Conditional Validation
-  if (accountType === "company" && !companyName) {
+  if (accountType === 'company' && !companyName) {
     return next(
-      new AppError("Company name is required for company accounts", 400)
+      new AppError('Company name is required for company accounts', 400)
     );
   }
-  if (accountType === "job_seeker" && (!firstName || !lastName)) {
+  if (accountType === 'job_seeker' && (!firstName || !lastName)) {
     return next(
-      new AppError("First name and Last name are required for job seekers", 400)
+      new AppError('First name and Last name are required for job seekers', 400)
     );
   }
 
@@ -57,20 +57,20 @@ exports.signup = catchAsync(async (req, res, next) => {
   });
 
   // 5. Create Profile based on account type
-  if (accountType === "job_seeker") {
+  if (accountType === 'job_seeker') {
     await JobSeeker.create({
       authId: newUserAuth._id,
       fullName: `${firstName} ${lastName}`,
     });
-  } else if (accountType === "company") {
+  } else if (accountType === 'company') {
     await Company.create({
       authId: newUserAuth._id,
       companyName: companyName,
-      companySize: companySize || "1-10",
+      companySize: companySize || '1-10',
     });
   }
 
-  // 6. Generate Verification Code (6 Digits)
+  // 6. Generate Verification Code
   const verificationCode = Math.floor(
     100000 + Math.random() * 900000
   ).toString();
@@ -80,17 +80,38 @@ exports.signup = catchAsync(async (req, res, next) => {
   await AuthToken.create({
     authId: newUserAuth._id,
     token: verificationCode,
-    tokenType: "email_verification",
+    tokenType: 'email_verification',
     expiresAt,
   });
 
-  // 8. Send Email (Simulated via Console)
-  console.log(`🔐 VERIFICATION CODE FOR ${email}: ${verificationCode}`);
+  // 8. Send Email (Actual Sending) ✅
+  try {
+    await sendEmail({
+      email: newUserAuth.email,
+      subject: 'Verify your account - AI-Career Guidance',
+      message: verificationCode, // سيظهر داخل القالب HTML
+    });
+  } catch (err) {
+    // التراجع في حالة الفشل
+    await Authentication.findByIdAndDelete(newUserAuth._id);
+    await AuthToken.deleteMany({ authId: newUserAuth._id });
+    if (accountType === 'job_seeker')
+      await JobSeeker.deleteOne({ authId: newUserAuth._id });
+    if (accountType === 'company')
+      await Company.deleteOne({ authId: newUserAuth._id });
+
+    console.error('Email Error:', err);
+    return next(
+      new AppError(
+        'There was an error sending the email. Please try again later!',
+        500
+      )
+    );
+  }
 
   res.status(201).json({
-    status: "success",
-    message:
-      "User registered successfully. Please check your email to verify your account.",
+    status: 'success',
+    message: 'User registered successfully. Please check your email.',
     data: {
       user: {
         id: newUserAuth._id,
@@ -105,43 +126,33 @@ exports.signup = catchAsync(async (req, res, next) => {
 exports.verifyEmail = catchAsync(async (req, res, next) => {
   const { email, verificationCode } = req.body;
 
-  // 1. Get user
   const user = await Authentication.findOne({ email });
-  if (!user) {
-    return next(new AppError("User not found", 404));
-  }
+  if (!user) return next(new AppError('User not found', 404));
+  if (user.isVerified)
+    return next(new AppError('User is already verified', 400));
 
-  if (user.isVerified) {
-    return next(new AppError("User is already verified", 400));
-  }
-
-  // 2. Check Token
   const authToken = await AuthToken.findOne({
     authId: user._id,
     token: verificationCode,
-    tokenType: "email_verification",
+    tokenType: 'email_verification',
     isUsed: false,
     expiresAt: { $gt: Date.now() },
   });
 
-  if (!authToken) {
-    return next(new AppError("Invalid or expired verification code", 400));
-  }
+  if (!authToken)
+    return next(new AppError('Invalid or expired verification code', 400));
 
-  // 3. Verify User
   user.isVerified = true;
   await user.save();
 
-  // 4. Mark Token as Used
   authToken.isUsed = true;
   await authToken.save();
 
-  // 5. Generate JWT & Send Response
   const token = signToken(user._id);
 
   res.status(200).json({
-    status: "success",
-    message: "Email verified successfully.",
+    status: 'success',
+    message: 'Email verified successfully.',
     token,
     data: {
       user: {
@@ -154,36 +165,71 @@ exports.verifyEmail = catchAsync(async (req, res, next) => {
   });
 });
 
+exports.resendVerificationCode = catchAsync(async (req, res, next) => {
+  const { email } = req.body;
+  const user = await Authentication.findOne({ email });
+
+  if (!user) return next(new AppError('User not found', 404));
+  if (user.isVerified)
+    return next(new AppError('This account is already verified.', 400));
+
+  await AuthToken.deleteMany({
+    authId: user._id,
+    tokenType: 'email_verification',
+  });
+
+  const verificationCode = Math.floor(
+    100000 + Math.random() * 900000
+  ).toString();
+  const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
+
+  await AuthToken.create({
+    authId: user._id,
+    token: verificationCode,
+    tokenType: 'email_verification',
+    expiresAt,
+  });
+
+  // Send Email (Actual Sending) ✅
+  try {
+    await sendEmail({
+      email: user.email,
+      subject: 'New Verification Code - AI-Career Guidance',
+      message: verificationCode,
+    });
+  } catch (err) {
+    return next(new AppError('Could not send email. Try again later.', 500));
+  }
+
+  res.status(200).json({
+    status: 'success',
+    message: 'Verification code sent successfully.',
+  });
+});
+
 exports.login = catchAsync(async (req, res, next) => {
   const { email, password } = req.body;
+  if (!email || !password)
+    return next(new AppError('Please provide email and password!', 400));
 
-  // 1) Check if email and password exist
-  if (!email || !password) {
-    return next(new AppError("Please provide email and password!", 400));
-  }
-
-  // 2) Check if user exists & password is correct
-  const user = await Authentication.findOne({ email }).select("+password");
-
+  const user = await Authentication.findOne({ email }).select('+password');
   if (!user || !(await user.correctPassword(password, user.password))) {
-    return next(new AppError("Incorrect email or password", 401));
+    return next(new AppError('Incorrect email or password', 401));
   }
 
-  // 3) Check if user is verified
   if (!user.isVerified) {
     return next(
       new AppError(
-        "Your account is not verified. Please check your email for the verification code.",
+        'Your account is not verified. Please check your email.',
         403
       )
     );
   }
 
-  // 4) If everything ok, send token
   const token = signToken(user._id);
 
   res.status(200).json({
-    status: "success",
+    status: 'success',
     token,
     data: {
       user: {
@@ -191,26 +237,23 @@ exports.login = catchAsync(async (req, res, next) => {
         email: user.email,
         accountType: user.accountType,
         isVerified: user.isVerified,
-        registrationStep: user.registrationStep, // ✅ الإضافة الضرورية هنا
+        registrationStep: user.registrationStep,
       },
     },
   });
 });
 
 exports.getMe = catchAsync(async (req, res, next) => {
-  // req.user is already available from 'protect' middleware
   const user = req.user;
-
-  // Fetch profile data based on account type
   let profile = null;
-  if (user.accountType === "job_seeker") {
+  if (user.accountType === 'job_seeker') {
     profile = await JobSeeker.findOne({ authId: user._id });
-  } else if (user.accountType === "company") {
+  } else if (user.accountType === 'company') {
     profile = await Company.findOne({ authId: user._id });
   }
 
   res.status(200).json({
-    status: "success",
+    status: 'success',
     data: {
       user: {
         id: user._id,
@@ -218,197 +261,138 @@ exports.getMe = catchAsync(async (req, res, next) => {
         accountType: user.accountType,
         isVerified: user.isVerified,
         registrationStep: user.registrationStep,
-        // Add profile info safely
-        firstName:
-          profile && profile.fullName ? profile.fullName.split(" ")[0] : "",
-        lastName:
-          profile && profile.fullName
-            ? profile.fullName.split(" ").slice(1).join(" ")
-            : "",
-        companyName: profile ? profile.companyName : undefined,
+        firstName: profile?.fullName?.split(' ')[0] || '',
+        lastName: profile?.fullName?.split(' ').slice(1).join(' ') || '',
+        companyName: profile?.companyName,
       },
     },
   });
 });
 
-exports.resendVerificationCode = catchAsync(async (req, res, next) => {
-  const { email } = req.body;
-
-  // 1. Check if user exists
-  const user = await Authentication.findOne({ email });
-  if (!user) {
-    return next(new AppError("User not found", 404));
-  }
-
-  // 2. Check if already verified
-  if (user.isVerified) {
-    return next(
-      new AppError("This account is already verified. Please login.", 400)
-    );
-  }
-
-  // 🛑 التعديل الجديد: حذف أي كود تفعيل قديم لهذا المستخدم
-  await AuthToken.deleteMany({
-    authId: user._id,
-    tokenType: "email_verification",
-  });
-
-  // 3. Generate New Code
-  const verificationCode = Math.floor(
-    100000 + Math.random() * 900000
-  ).toString();
-  const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
-
-  // 4. Save New Token
-  await AuthToken.create({
-    authId: user._id,
-    token: verificationCode,
-    tokenType: "email_verification",
-    expiresAt,
-  });
-
-  // 5. Send Email
-  console.log(`🔄 RESEND VERIFICATION CODE FOR ${email}: ${verificationCode}`);
-
-  res.status(200).json({
-    status: "success",
-    message: "Verification code sent successfully.",
-  });
-});
-
-// ============================================================
-// Password Reset Logic
-// ============================================================
-
 exports.forgotPassword = catchAsync(async (req, res, next) => {
   const { email } = req.body;
   const user = await Authentication.findOne({ email });
+  if (!user) return next(new AppError('User not found.', 404));
 
-  if (!user) {
-    return next(new AppError("There is no user with that email address.", 404));
-  }
-
-  // 1. Rate Limiting Check (التحقق من التكرار)
+  // Rate Limiting
   const lastToken = await AuthToken.findOne({
     authId: user._id,
-    tokenType: "password_reset",
-    used: false,
-    expiresAt: { $gt: Date.now() }, // ما زال سارياً
-  }).sort({ createdAt: -1 }); // نأخذ الأحدث
+    tokenType: 'password_reset',
+    isUsed: false,
+    expiresAt: { $gt: Date.now() },
+  }).sort({ createdAt: -1 });
 
   if (lastToken) {
-    // نحسب الفرق بين الوقت الحالي ووقت إنشاء التوكن السابق
     const timeSinceLastRequest =
       (Date.now() - new Date(lastToken.createdAt).getTime()) / 1000;
-
-    // مثلاً نضع حد أدنى 60 ثانية بين كل طلب
-    const COOLDOWN_SECONDS = 60;
-
-    if (timeSinceLastRequest < COOLDOWN_SECONDS) {
-      const waitTime = Math.ceil(COOLDOWN_SECONDS - timeSinceLastRequest);
+    if (timeSinceLastRequest < 60) {
       return next(
         new AppError(
-          `Please wait ${waitTime} seconds before requesting a new link.`,
+          `Please wait ${Math.ceil(60 - timeSinceLastRequest)} seconds.`,
           429
         )
       );
     }
   }
 
-  // 2. Generate random reset token
-  // نستخدم crypto لعمل توكن عشوائي قوي
-  const resetToken = crypto.randomBytes(32).toString("hex");
-
-  // 3. Set expiration (e.g., 1 hour)
+  const resetToken = crypto.randomBytes(32).toString('hex');
   const expiresAt = new Date(Date.now() + 60 * 60 * 1000);
 
-  // 4. Save token to DB
   await AuthToken.create({
     authId: user._id,
     token: resetToken,
-    tokenType: "password_reset", // ✅ نستخدم النوع الموجود في الداتابيز
+    tokenType: 'password_reset',
     expiresAt,
   });
 
-  const resetURL = `http://localhost:5173/src/pages/auth/reset-password.html?token=${resetToken}`;
-  // 6. Send Email (Simulated)
-  const message = `Forgot your password? Submit your new password via this link: ${resetURL}.\nIf you didn't forget your password, please ignore this email!`;
+  // ✅ استخدام رابط Vercel (Production)
+  const resetURL = `https://career-pro-frontend-deploy.vercel.app/src/pages/auth/reset-password.html?token=${resetToken}`;
 
-  console.log("📧 =========================================");
-  console.log(`📧 PASSWORD RESET LINK FOR ${email}:`);
-  console.log(`🔗 ${resetURL}`);
-  console.log("📧 =========================================");
+  // Custom HTML for Reset Email
+  const resetHtml = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <style>
+        body { font-family: Arial, sans-serif; background: #f6f9fc; padding: 20px; }
+        .container { max-width: 600px; margin: 0 auto; background: #fff; padding: 30px; border-radius: 10px; text-align: center; }
+        .btn { display: inline-block; background: #ef4444; color: #fff; padding: 12px 24px; text-decoration: none; border-radius: 5px; font-weight: bold; margin: 20px 0; }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <h2>Reset Your Password</h2>
+        <p>Click the button below to set a new password:</p>
+        <a href="${resetURL}" class="btn">Reset Password</a>
+        <p style="font-size: 12px; color: #666;">Or copy this link: <br> ${resetURL}</p>
+      </div>
+    </body>
+    </html>
+  `;
 
-  res.status(200).json({
-    status: "success",
-    message: "Token sent to email!",
-  });
+  try {
+    await sendEmail({
+      email: user.email,
+      subject: 'Password Reset Request',
+      message: `Reset link: ${resetURL}`,
+      html: resetHtml,
+    });
+
+    res
+      .status(200)
+      .json({ status: 'success', message: 'Token sent to email!' });
+  } catch (err) {
+    await AuthToken.deleteOne({ authId: user._id, token: resetToken });
+    return next(new AppError('Error sending email.', 500));
+  }
 });
 
 exports.resetPassword = catchAsync(async (req, res, next) => {
   const { token } = req.params;
   const { password, passwordConfirm } = req.body;
 
-  // 1. Find Token (كما هو)
   const tokenDoc = await AuthToken.findOne({
     token: token,
-    tokenType: "password_reset",
+    tokenType: 'password_reset',
     isUsed: false,
     expiresAt: { $gt: Date.now() },
   });
 
-  if (!tokenDoc) {
-    return next(new AppError("Token is invalid or has expired", 400));
-  }
+  if (!tokenDoc)
+    return next(new AppError('Token is invalid or has expired', 400));
+  if (password !== passwordConfirm)
+    return next(new AppError('Passwords do not match', 400));
 
-  // 2. Passwords Match (كما هو)
-  if (password !== passwordConfirm) {
-    return next(new AppError("Passwords do not match", 400));
-  }
-
-  // 3. Find User (كما هو)
   const user = await Authentication.findById(tokenDoc.authId).select(
-    "+password"
-  ); // تأكد من جلب الباسورد
-  if (!user) {
-    return next(new AppError("User not found.", 404));
-  }
+    '+password'
+  );
+  if (!user) return next(new AppError('User not found.', 404));
 
-  // 4. Check if new password is same as old (الإضافة الجديدة)
-  // نستخدم دالة المقارنة الموجودة في الموديل (أو bcrypt مباشرة)
-  const isSamePassword = await user.correctPassword(password, user.password);
-
-  if (isSamePassword) {
+  if (await user.correctPassword(password, user.password)) {
     return next(
-      new AppError(
-        "New password cannot be the same as your old password. Please choose a different one.",
-        400
-      )
+      new AppError('New password cannot be the same as old password.', 400)
     );
   }
 
-  // 5. Update Password (كما هو)
   user.password = password;
   await user.save();
 
-  // 6. Mark Token Used (كما هو)
   tokenDoc.isUsed = true;
   await tokenDoc.save();
 
   const jwtToken = signToken(user._id);
 
   res.status(200).json({
-    status: "success",
-    message: "Password updated successfully!",
+    status: 'success',
+    message: 'Password updated successfully!',
     token: jwtToken,
-    // نضيف نوع الحساب عشان الفرونت يعرف يوجه فين
     data: {
       user: {
         id: user._id,
         email: user.email,
         accountType: user.accountType,
         isVerified: user.isVerified,
-        registrationStep: user.registrationStep, // مهم جداً للمشكلة الثالثة
+        registrationStep: user.registrationStep,
       },
     },
   });
