@@ -1,7 +1,7 @@
-const multer = require("multer");
-const cloudinary = require("cloudinary").v2;
-const { CloudinaryStorage } = require("multer-storage-cloudinary");
-const AppError = require("./AppError"); // Adjust path if needed
+const multer = require('multer');
+const cloudinary = require('cloudinary').v2;
+const { CloudinaryStorage } = require('multer-storage-cloudinary');
+const AppError = require('./AppError'); // Adjust path if needed
 
 // ================= CLOUDINARY CONFIGURATION =================
 // Ensure your .env variables are loaded before this file runs
@@ -15,24 +15,24 @@ cloudinary.config({
 const storage = new CloudinaryStorage({
   cloudinary: cloudinary,
   params: async (req, file) => {
-    // Determine folder and resource type based on route/fieldname
-    let folderName = "careerpro/misc";
-    let resourceType = "auto"; // 'auto' allows PDFs, DOCX, and Images
+    let folderName = 'careerpro/misc';
+    let resourceType = 'auto';
 
-    if (file.fieldname === "cvFile") {
-      folderName = "careerpro/cvs";
-      resourceType = "auto"; // For PDFs and Word Docs
-    } else if (file.fieldname === "logoFile") {
-      folderName = "careerpro/images";
-      resourceType = "image"; // Strictly images
-    } else if (file.fieldname === "verificationDocument") {
-      folderName = "careerpro/docs";
-      resourceType = "auto"; // For PDFs and Docs
+    if (file.fieldname === 'cvFile') {
+      folderName = 'careerpro/cvs';
+      resourceType = 'auto';
+    } else if (file.fieldname === 'logoFile') {
+      folderName = 'careerpro/images';
+      resourceType = 'image';
+    } else if (file.fieldname === 'profileImage') {
+      folderName = 'careerpro/avatars';
+      resourceType = 'image';
+    } else if (file.fieldname === 'verificationDocument') {
+      folderName = 'careerpro/docs';
+      resourceType = 'auto';
     }
 
-    // Generate unique filename identifier (public_id in Cloudinary)
-    // Note: Cloudinary automatically adds the correct extension (.pdf, .png)
-    const userId = req.user ? req.user._id : "guest";
+    const userId = req.user ? req.user._id : 'guest';
     const publicId = `user-${userId}-${Date.now()}`;
 
     return {
@@ -47,35 +47,36 @@ const storage = new CloudinaryStorage({
 // Kept exactly as your original solid logic
 const fileFilter = (req, file, cb) => {
   if (
-    file.fieldname === "cvFile" ||
-    file.fieldname === "verificationDocument"
+    file.fieldname === 'cvFile' ||
+    file.fieldname === 'verificationDocument'
   ) {
-    // Allow only PDFs and Docs
     if (
-      file.mimetype === "application/pdf" ||
-      file.mimetype === "application/msword" ||
+      file.mimetype === 'application/pdf' ||
+      file.mimetype === 'application/msword' ||
       file.mimetype ===
-        "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
     ) {
       cb(null, true);
     } else {
       cb(
         new AppError(
-          "Not a valid document! Please upload PDF or DOC/DOCX.",
+          'Not a valid document! Please upload PDF or DOC/DOCX.',
           400
         ),
         false
       );
     }
-  } else if (file.fieldname === "logoFile") {
-    // Allow only Images
-    if (file.mimetype.startsWith("image")) {
+  } else if (
+    file.fieldname === 'logoFile' ||
+    file.fieldname === 'profileImage'
+  ) {
+    if (file.mimetype.startsWith('image')) {
       cb(null, true);
     } else {
-      cb(new AppError("Not an image! Please upload only images.", 400), false);
+      cb(new AppError('Not an image! Please upload only images.', 400), false);
     }
   } else {
-    cb(new AppError("Unknown file field!", 400), false);
+    cb(new AppError('Unknown file field!', 400), false);
   }
 };
 

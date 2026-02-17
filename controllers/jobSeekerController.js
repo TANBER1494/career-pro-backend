@@ -1,10 +1,10 @@
-const JobSeeker = require("../models/JobSeeker");
-const CvUpload = require("../models/CvUpload");
-const Authentication = require("../models/Authentication");
-const catchAsync = require("../utils/catchAsync");
-const AppError = require("../utils/AppError");
-const Job = require("../models/Job");
-const Application = require("../models/JobApplication");
+const JobSeeker = require('../models/JobSeeker');
+const CvUpload = require('../models/CvUpload');
+const Authentication = require('../models/Authentication');
+const catchAsync = require('../utils/catchAsync');
+const AppError = require('../utils/AppError');
+const Job = require('../models/Job');
+const Application = require('../models/JobApplication');
 // ============================================================
 // 1. Update Personal Info (Step 1)
 // ============================================================
@@ -59,8 +59,8 @@ exports.updateProfileStep1 = catchAsync(async (req, res, next) => {
   await Authentication.findByIdAndUpdate(req.user.id, { registrationStep: 2 });
 
   res.status(200).json({
-    status: "success",
-    message: "Personal information updated successfully",
+    status: 'success',
+    message: 'Personal information updated successfully',
     data: { profile: updatedSeeker },
   });
 });
@@ -93,14 +93,14 @@ exports.updateProfileStep2 = catchAsync(async (req, res, next) => {
   );
 
   if (!updatedSeeker) {
-    return next(new AppError("Please complete Step 1 first", 404));
+    return next(new AppError('Please complete Step 1 first', 404));
   }
 
   await Authentication.findByIdAndUpdate(req.user.id, { registrationStep: 3 });
 
   res.status(200).json({
-    status: "success",
-    message: "Education updated successfully",
+    status: 'success',
+    message: 'Education updated successfully',
     data: { education: updatedSeeker },
   });
 });
@@ -111,27 +111,27 @@ exports.updateProfileStep2 = catchAsync(async (req, res, next) => {
 exports.uploadCV = catchAsync(async (req, res, next) => {
   if (!req.file) {
     return next(
-      new AppError("No CV file uploaded. Please upload a PDF or DOCX.", 400)
+      new AppError('No CV file uploaded. Please upload a PDF or DOCX.', 400)
     );
   }
 
   const seeker = await JobSeeker.findOne({ authId: req.user.id });
-  if (!seeker) return next(new AppError("Job Seeker profile not found", 404));
+  if (!seeker) return next(new AppError('Job Seeker profile not found', 404));
 
   const newCv = await CvUpload.create({
     seekerId: seeker._id,
     fileName: req.file.originalname,
-    filePath: req.file.path.replace(/\\/g, "/"), 
-    fileType: req.file.mimetype.split("/")[1] || "pdf",
+    filePath: req.file.path.replace(/\\/g, '/'),
+    fileType: req.file.mimetype.split('/')[1] || 'pdf',
     fileSize: req.file.size,
-    uploadStatus: "uploaded",
+    uploadStatus: 'uploaded',
   });
 
   await Authentication.findByIdAndUpdate(req.user.id, { registrationStep: 4 });
 
   res.status(201).json({
-    status: "success",
-    message: "CV uploaded successfully",
+    status: 'success',
+    message: 'CV uploaded successfully',
     data: {
       cvUrl: newCv.filePath,
       fileName: newCv.fileName,
@@ -144,13 +144,13 @@ exports.uploadCV = catchAsync(async (req, res, next) => {
 exports.getMe = catchAsync(async (req, res, next) => {
   // ✅ التعديل هنا: أضفنا firstName و lastName في الـ populate
   const seeker = await JobSeeker.findOne({ authId: req.user.id }).populate(
-    "authId",
-    "email firstName lastName"
+    'authId',
+    'email firstName lastName'
   );
 
   if (!seeker) {
     return res.status(200).json({
-      status: "success",
+      status: 'success',
       data: { profile: {} },
     });
   }
@@ -164,13 +164,14 @@ exports.getMe = catchAsync(async (req, res, next) => {
   // 2. إذا لم يوجد، نستخدم الاسم المسجل في حساب الدخول (Auth)
   const authName = seeker.authId
     ? `${seeker.authId.firstName} ${seeker.authId.lastName}`
-    : "";
+    : '';
   const finalName = seeker.fullName || authName;
 
   const responseData = {
     personal: {
-      fullName: finalName, // ✅ الاسم سيظهر الآن
-      firstName: seeker.authId?.firstName, // نرسلهم منفصلين أيضاً للاحتياط
+      fullName: finalName,
+      profilePicture: seeker.profilePicture,
+      firstName: seeker.authId?.firstName,
       lastName: seeker.authId?.lastName,
       jobTitle: seeker.jobTitle,
       summary: seeker.summary,
@@ -197,15 +198,43 @@ exports.getMe = catchAsync(async (req, res, next) => {
     },
     cv: latestCv
       ? {
-          cvUrl: latestCv.filePath.replace(/\\/g, "/"),
+          cvUrl: latestCv.filePath.replace(/\\/g, '/'),
           fileName: latestCv.fileName,
         }
       : null,
   };
 
   res.status(200).json({
-    status: "success",
+    status: 'success',
     data: responseData,
+  });
+});
+
+// ============================================================
+//  Upload Profile Picture (New API)
+// ============================================================
+exports.uploadProfilePicture = catchAsync(async (req, res, next) => {
+  if (!req.file) {
+    return next(new AppError('Please upload an image file.', 400));
+  }
+
+  // تحديث حقل الصورة في الداتابيز
+  const updatedSeeker = await JobSeeker.findOneAndUpdate(
+    { authId: req.user.id },
+    { profilePicture: req.file.path.replace(/\\/g, '/') }, // Cloudinary URL
+    { new: true }
+  );
+
+  if (!updatedSeeker) {
+    return next(new AppError('Job Seeker profile not found', 404));
+  }
+
+  res.status(200).json({
+    status: 'success',
+    message: 'Profile picture updated successfully',
+    data: {
+      profilePicture: updatedSeeker.profilePicture,
+    },
   });
 });
 
@@ -216,23 +245,23 @@ exports.toggleSaveJob = catchAsync(async (req, res, next) => {
   const jobId = req.params.id;
   const seeker = await JobSeeker.findOne({ authId: req.user.id });
 
-  if (!seeker) return next(new AppError("Profile not found.", 404));
+  if (!seeker) return next(new AppError('Profile not found.', 404));
 
   const isJobSaved = seeker.savedJobs.some((id) => id.toString() === jobId);
-  let message = "";
+  let message = '';
 
   if (isJobSaved) {
     seeker.savedJobs = seeker.savedJobs.filter((id) => id.toString() !== jobId);
-    message = "Job removed from saved list.";
+    message = 'Job removed from saved list.';
   } else {
     seeker.savedJobs.push(jobId);
-    message = "Job saved successfully.";
+    message = 'Job saved successfully.';
   }
 
   await seeker.save({ validateBeforeSave: false });
 
   res.status(200).json({
-    status: "success",
+    status: 'success',
     message,
     data: { isSaved: !isJobSaved },
   });
@@ -242,20 +271,20 @@ exports.getSavedJobs = catchAsync(async (req, res, next) => {
   const seeker = await JobSeeker.findOne({ authId: req.user.id });
 
   if (!seeker) {
-    return next(new AppError("User not found", 404));
+    return next(new AppError('User not found', 404));
   }
 
   // 2. نبحث في جدول الوظائف عن كل وظيفة الـ ID الخاص بها موجود في مصفوفة savedJobs
   const jobs = await Job.find({
     _id: { $in: seeker.savedJobs },
   }).populate({
-    path: "companyId", // عشان نجيب اسم الشركة واللوجو
-    select: "companyName logoUrl location",
+    path: 'companyId', // عشان نجيب اسم الشركة واللوجو
+    select: 'companyName logoUrl location',
   });
 
   // 3. إرسال الرد
   res.status(200).json({
-    status: "success",
+    status: 'success',
     results: jobs.length,
     data: {
       jobs: jobs, // الفرونت مستني data.jobs
@@ -272,7 +301,7 @@ exports.deleteApplication = catchAsync(async (req, res, next) => {
   const seeker = await JobSeeker.findOne({ authId: req.user.id });
 
   if (!seeker) {
-    return next(new AppError("Job Seeker profile not found.", 404));
+    return next(new AppError('Job Seeker profile not found.', 404));
   }
 
   const application = await Application.findOneAndDelete({
@@ -283,7 +312,7 @@ exports.deleteApplication = catchAsync(async (req, res, next) => {
   if (!application) {
     return next(
       new AppError(
-        "Application not found or you are not authorized to delete it.",
+        'Application not found or you are not authorized to delete it.',
         404
       )
     );
@@ -291,7 +320,7 @@ exports.deleteApplication = catchAsync(async (req, res, next) => {
 
   // 3. الرد بنجاح
   res.status(204).json({
-    status: "success",
+    status: 'success',
     data: null,
   });
 });

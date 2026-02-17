@@ -16,6 +16,10 @@ const jobSeekerSchema = new mongoose.Schema(
       trim: true,
       default: "",
     },
+    profilePicture: {
+      type: String,
+      default: "", 
+    },
     jobTitle: {
       type: String,
       trim: true,
