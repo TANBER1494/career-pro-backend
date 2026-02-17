@@ -1,17 +1,14 @@
 const nodemailer = require('nodemailer');
 
 const sendEmail = async (options) => {
-  // 1) إعداد الناقل (Transporter) باستخدام خدمة Gmail
   const transporter = nodemailer.createTransport({
     service: 'gmail',
     auth: {
-      user: process.env.EMAIL_USER, // إيميلك اللي في .env
-      pass: process.env.EMAIL_PASS, // كود الـ 16 حرف
+      user: process.env.EMAIL_USER, 
+      pass: process.env.EMAIL_PASS, 
     },
   });
 
-  // 2) تصميم القالب الاحترافي (HTML Template)
-  // هذا القالب سيتم استخدامه إذا لم ترسل html خاص بك
   const defaultHtmlTemplate = `
     <!DOCTYPE html>
     <html>
@@ -55,16 +52,14 @@ const sendEmail = async (options) => {
     </html>
   `;
 
-  // 3) إعداد خيارات الرسالة
   const mailOptions = {
     from: '"AI-Career Guidance Team" <process.env.EMAIL_USER>',
     to: options.email,
     subject: options.subject,
-    text: options.message, // نسخة نصية احتياطية
-    html: options.html || defaultHtmlTemplate, // نستخدم القالب الافتراضي لو مفيش html مبعوت
+    text: options.message, 
+    html: options.html || defaultHtmlTemplate, 
   };
 
-  // 4) إرسال الإيميل فعلياً
   await transporter.sendMail(mailOptions);
 };
 
