@@ -33,6 +33,7 @@ app.use(helmet.crossOriginResourcePolicy({ policy: 'cross-origin' }));
 const allowedOrigins = [
   'https://aicareerpro.vercel.app',
   'https://careerpro.me',
+  'https://www.careerpro.me',
   'https://careerpro.dev',
   'https://careerpro.works', // رابط موقعك على فيرسل
   'http://localhost:5173', // رابط جهازك المحلي (Vite)
