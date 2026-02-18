@@ -35,10 +35,10 @@ const allowedOrigins = [
   'https://careerpro.me',
   'https://www.careerpro.me',
   'https://careerpro.dev',
-  'https://careerpro.works', // رابط موقعك على فيرسل
-  'http://localhost:5173', // رابط جهازك المحلي (Vite)
-  'http://localhost:5500', // لو شغال بـ Live Server
-  'http://127.0.0.1:5173',
+  'https://www.careerpro.dev',
+  'https://careerpro.works',
+  'https://www.careerpro.works', 
+  'http://localhost:5173',
 ];
 
 app.use(
