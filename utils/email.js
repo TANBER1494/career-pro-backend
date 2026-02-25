@@ -1,14 +1,10 @@
-const nodemailer = require('nodemailer');
+const { Resend } = require('resend');
+
+// تهيئة مكتبة Resend باستخدام مفتاح الأمان من البيئة
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 const sendEmail = async (options) => {
-  const transporter = nodemailer.createTransport({
-    service: 'gmail',
-    auth: {
-      user: process.env.EMAIL_USER, 
-      pass: process.env.EMAIL_PASS, 
-    },
-  });
-
+  // تصميم الـ HTML الاحترافي الخاص بك (لم نغيره)
   const defaultHtmlTemplate = `
     <!DOCTYPE html>
     <html>
@@ -52,15 +48,22 @@ const sendEmail = async (options) => {
     </html>
   `;
 
-  const mailOptions = {
-    from: '"AI-Career Guidance Team" <process.env.EMAIL_USER>',
+  // إرسال الإيميل باستخدام Resend
+  const { data, error } = await resend.emails.send({
+    from: `CareerPro Team <${process.env.EMAIL_FROM}>`, // اسم مرسل احترافي + الإيميل الموثق
     to: options.email,
     subject: options.subject,
-    text: options.message, 
+    text: options.message, // نسخة نصية عادية تحسباً لأي خطأ في عرض الـ HTML
     html: options.html || defaultHtmlTemplate, 
-  };
+  });
 
-  await transporter.sendMail(mailOptions);
+  // معالجة الأخطاء لو حدثت مشكلة في الإرسال
+  if (error) {
+    console.error("Resend Error details:", error);
+    throw new Error('Email could not be sent. Please try again later.');
+  }
+
+  return data;
 };
 
 module.exports = sendEmail;
