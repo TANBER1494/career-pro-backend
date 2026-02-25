@@ -53,3 +53,15 @@ exports.restrictTo = (...roles) => {
     next();
   };
 };
+
+
+// Middleware لمنع المستخدمين غير المكتملين من الوصول للميزات الأساسية
+exports.requireCompleteProfile = catchAsync(async (req, res, next) => {
+  // بنفترض إنك بتستخدم authMiddleware.protect قبله، فـ req.user موجودة
+  if (req.user.registrationStep < 4) {
+    return next(
+      new AppError('You must complete your profile setup to access this feature.', 403)
+    );
+  }
+  next();
+});
