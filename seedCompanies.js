@@ -113,6 +113,8 @@ const seedSeekers = async () => {
       });
     }
 
+    //Notifications API seeding (optional)
+
     console.log('🎉 Successfully created 5 premium seekers!');
     console.log('🔐 Login using their emails with password: Password@123');
     process.exit();
