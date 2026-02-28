@@ -299,15 +299,19 @@ exports.suspendUser = catchAsync(async (req, res, next) => {
 
   const suspensionHtml = `
     <div style="font-family: sans-serif; max-width: 600px; margin: auto; border: 1px solid #eee; padding: 20px;">
-      <h2 style="color: #d9534f;">Account Suspended ⚠️</h2>
+      <h2 style="color: #d9534f;">Account Suspended & Pending Deletion ⚠️</h2>
       <p>Dear User,</p>
-      <p>We regret to inform you that your account has been <b>suspended for 3 days</b> due to a violation of our community policies.</p>
+      <p>We regret to inform you that your account has been <b>suspended</b> due to a violation of our community policies.</p>
       <div style="background: #f9f9f9; padding: 15px; border-left: 5px solid #d9534f; margin: 20px 0;">
         <strong>Reason for Suspension:</strong><br>
         ${reason}
       </div>
-      <p>Your account will remain inactive until: <b>${suspensionExpires.toLocaleString()}</b></p>
-      <p>If you believe this was a mistake, you can appeal this decision by contacting our support team at:</p>
+      <p style="color: #d9534f; font-weight: bold; font-size: 16px;">
+        🚨 Urgent Action Required: You have exactly 3 days to appeal this decision. 
+        If we do not receive a valid appeal, your account and all associated data will be permanently deleted on:<br>
+        <span style="color: #000;">${suspensionExpires.toLocaleString()}</span>
+      </p>
+      <p>To appeal, please contact our support team immediately at:</p>
       <p style="text-align: center; font-weight: bold; font-size: 18px;">
         <a href="mailto:careerguidanceapp001@gmail.com">careerguidanceapp001@gmail.com</a>
       </p>
@@ -318,8 +322,8 @@ exports.suspendUser = catchAsync(async (req, res, next) => {
   try {
     await sendEmail({
       email: user.email,
-      subject: 'Account Suspension Notice - Policy Violation',
-      message: `Your account is suspended until ${suspensionExpires}. Reason: ${reason}. Contact support at careerguidanceapp001@gmail.com to appeal.`,
+      subject: 'Action Required: Account Suspended & Pending Deletion ⚠️',
+      message: `Your account is suspended. You have 3 days to appeal before permanent deletion on ${suspensionExpires}. Reason: ${reason}. Contact support at careerguidanceapp001@gmail.com.`,
       html: suspensionHtml,
     });
   } catch (err) {
