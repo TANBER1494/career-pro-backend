@@ -6,6 +6,7 @@ const JobSeeker = require('../models/JobSeeker');
 const Job = require('../models/Job');
 const Authentication = require('../models/Authentication');
 const Application = require('../models/JobApplication');
+const sendEmail = require('../utils/email');
 
 // 1. Get All Verification Requests (Pending)
 exports.getVerificationRequests = catchAsync(async (req, res, next) => {
@@ -279,11 +280,9 @@ exports.suspendUser = catchAsync(async (req, res, next) => {
     return next(new AppError('Please provide a reason for suspension', 400));
   }
 
-  // 1. Calculate Suspension Expiry (3 Days from now)
   const threeDaysInMs = 3 * 24 * 60 * 60 * 1000;
   const suspensionExpires = new Date(Date.now() + threeDaysInMs);
 
-  // 2. Find and Update the Authentication record
   const user = await Authentication.findByIdAndUpdate(
     id,
     {
@@ -298,18 +297,38 @@ exports.suspendUser = catchAsync(async (req, res, next) => {
     return next(new AppError('No user found with that ID', 404));
   }
 
-  console.log(`⚠️ Admin suspended user: ${user.email} until ${suspensionExpires}`);
+  const suspensionHtml = `
+    <div style="font-family: sans-serif; max-width: 600px; margin: auto; border: 1px solid #eee; padding: 20px;">
+      <h2 style="color: #d9534f;">Account Suspended ⚠️</h2>
+      <p>Dear User,</p>
+      <p>We regret to inform you that your account has been <b>suspended for 3 days</b> due to a violation of our community policies.</p>
+      <div style="background: #f9f9f9; padding: 15px; border-left: 5px solid #d9534f; margin: 20px 0;">
+        <strong>Reason for Suspension:</strong><br>
+        ${reason}
+      </div>
+      <p>Your account will remain inactive until: <b>${suspensionExpires.toLocaleString()}</b></p>
+      <p>If you believe this was a mistake, you can appeal this decision by contacting our support team at:</p>
+      <p style="text-align: center; font-weight: bold; font-size: 18px;">
+        <a href="mailto:careerguidanceapp001@gmail.com">careerguidanceapp001@gmail.com</a>
+      </p>
+      <p>Best regards,<br>CareerPro Compliance Team</p>
+    </div>
+  `;
+
+  try {
+    await sendEmail({
+      email: user.email,
+      subject: 'Account Suspension Notice - Policy Violation',
+      message: `Your account is suspended until ${suspensionExpires}. Reason: ${reason}. Contact support at careerguidanceapp001@gmail.com to appeal.`,
+      html: suspensionHtml,
+    });
+  } catch (err) {
+    console.error('⚠️ Suspension email failed to send:', err);
+  }
 
   res.status(200).json({
     status: 'success',
-    message: `User account has been suspended until ${suspensionExpires.toLocaleString()}`,
-    data: {
-      user: {
-        id: user._id,
-        email: user.email,
-        status: user.status,
-        suspensionExpires: user.suspensionExpires,
-      },
-    },
+    message: `User suspended and notification email sent to ${user.email}`,
+    data: { user },
   });
 });
