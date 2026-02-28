@@ -22,6 +22,19 @@ const authenticationSchema = new mongoose.Schema(
       enum: ["job_seeker", "company", "admin"],
       required: [true, "Please provide account type"],
     },
+    status: {
+      type: String,
+      enum: ["active", "suspended", "deactivated"],
+      default: "active",
+    },
+    suspensionExpires: {
+      type: Date,
+      default: null,
+    },
+    suspensionReason: {
+      type: String,
+      default: null,
+    },
     isVerified: {
       type: Boolean,
       default: false,
