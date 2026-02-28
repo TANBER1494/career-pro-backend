@@ -25,81 +25,75 @@ const app = express();
 
 // ================= CORE MIDDLEWARE STACK =================
 
+// 💡 0. Trust Vercel Proxy (ضروري جداً لعمل الـ Rate Limiter وجمع الـ IPs بشكل صحيح على Vercel)
+app.set('trust proxy', 1);
+
 // 1. Set Security HTTP Headers
 app.use(helmet());
 app.use(helmet.crossOriginResourcePolicy({ policy: 'cross-origin' }));
 
-// 2. CORS Configuration (Crucial for Vanilla JS Fetch/XHR)
-const allowedOrigins = [
-  'https://aicareerpro.vercel.app',
-  'https://careerpro.me',
-  'https://www.careerpro.me',
-  'https://careerpro.dev',
-  'https://www.careerpro.dev',
-  'https://careerpro.works',
-  'https://www.careerpro.works', 
-  'http://localhost:5173',
-  "http://127.0.0.1:5173"
-];
+// 2. CORS Configuration (Dynamic & Robust for Vercel/Localhost)
+const corsOptions = {
+  origin: function (origin, callback) {
+    // السماح ديناميكياً بأي Origin يطلب البيانات (مثالي لبيئة الـ Preview والـ Localhost)
+    callback(null, true);
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: [
+    'Content-Type', 
+    'Authorization', 
+    'X-Requested-With', 
+    'Accept', 
+    'Set-Cookie'
+  ],
+  optionsSuccessStatus: 204 // لضمان استجابة سريعة لطلبات الـ OPTIONS القديمة
+};
 
-app.use(
-  cors({
-    origin: function (origin, callback) {
-      // السماح بالطلبات اللي ملهاش Origin (زي الـ Mobile apps أو Postman)
-      // أو الطلبات اللي موجودة في القائمة بتاعتنا
-      if (!origin || allowedOrigins.indexOf(origin) !== -1) {
-        callback(null, true);
-      } else {
-        callback(new Error('Not allowed by CORS'));
-      }
-    },
-    credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-  })
-);
+// تفعيل الـ CORS للميدل وير العام
+app.use(cors(corsOptions));
 
-// 3. Development Request Logging
+// 💡 3. Explicit Preflight Handler (حل مشكلة الـ OPTIONS الـ "عنيدة" في Vercel)
+app.options('*', cors(corsOptions));
+
+// 4. Development Request Logging
 if (process.env.NODE_ENV === 'development') {
   app.use(morgan('dev'));
 }
 
-// 4. Rate Limiting
+// 5. Rate Limiting (تأكد أن trust proxy مفعل ليعمل بشكل صحيح)
 const limiter = rateLimit({
-  max: 1000,
+  max: 5000, // رفعنا الحد قليلاً لضمان عدم حدوث بلوك أثناء التيست المكثف
   windowMs: 60 * 60 * 1000,
   message: 'Too many requests from this IP, please try again in an hour!',
+  standardHeaders: true,
+  legacyHeaders: false,
 });
 app.use('/api', limiter);
 
-// 5. Body Parsers (CRITICAL FOR VANILLA JS)
-// - Parses application/json (fetch API with JSON stringify)
+// 6. Body Parsers (CRITICAL FOR VANILLA JS)
 app.use(express.json({ limit: '10kb' }));
-// - Parses application/x-www-form-urlencoded (Standard HTML Forms & FormData)
 app.use(express.urlencoded({ extended: true, limit: '10kb' }));
 
-// 6. CUSTOM NoSQL Injection Sanitizer (The Fix)
-// Bypasses the "getter-only" Express error by mutating keys instead of the object
+// 7. CUSTOM NoSQL Injection Sanitizer
 app.use((req, res, next) => {
   if (req.body) req.body = mongoSanitize.sanitize(req.body);
   if (req.params) req.params = mongoSanitize.sanitize(req.params);
 
   if (req.query) {
-    // Sanitize the data first
     const cleanedQuery = mongoSanitize.sanitize(req.query);
-    // Clear the existing keys safely
     for (const key in req.query) {
       delete req.query[key];
     }
-    // Assign the cleaned data back into the read-only object
     Object.assign(req.query, cleanedQuery);
   }
   next();
 });
 
-// 7. HTTP Parameter Pollution Prevention
+// 8. HTTP Parameter Pollution Prevention
 app.use(hpp());
 
-// 8. Static File Serving
+// 9. Static File Serving
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Welcome Route
