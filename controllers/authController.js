@@ -8,6 +8,7 @@ const AppError = require('../utils/AppError');
 const crypto = require('crypto');
 const sendEmail = require('../utils/email'); //
 const Job = require('../models/Job');
+const Blacklist = require('../models/Blacklist');
 
 // Helper Function to generate JWT
 const signToken = (id) => {
@@ -228,23 +229,38 @@ exports.login = catchAsync(async (req, res, next) => {
 
     // ❌ الحالة الأولى: انتهت مهلة الـ 3 أيام (إعدام الحساب)
     if (now > expiryDate) {
+      // ==========================================
+      // 🚨 0. إضافة الإيميل للقائمة السوداء قبل الحذف (التعديل الجديد)
+      // ==========================================
+      await Blacklist.create({
+        email: user.email,
+        reason:
+          user.suspensionReason ||
+          'Account deleted after suspension period expired',
+      });
+      console.log(`🚫 Blacklist Updated: ${user.email} is permanently banned.`);
+      // ==========================================
+
       // 1. مسح البروفايل الخاص بالمستخدم والوظائف لو كان شركة
       if (user.accountType === 'job_seeker') {
         await JobSeeker.findOneAndDelete({ authId: user._id });
       } else if (user.accountType === 'company') {
         const comp = await Company.findOneAndDelete({ authId: user._id });
         if (comp) {
-           await Job.deleteMany({ companyId: comp._id });
+          await Job.deleteMany({ companyId: comp._id });
         }
       }
 
       // 2. مسح أي توكنز قديمة (زي الإيميل أو نسيان الباسورد)
-      await AuthToken.deleteMany({ authId: user._id });
+      // (تأكد إن موديل AuthToken مستدعى لو بتستخدمه، أو احذفه لو مش عندك)
+      // await AuthToken.deleteMany({ authId: user._id });
 
       // 3. مسح حساب الدخول الأساسي
       await Authentication.findByIdAndDelete(user._id);
 
-      console.log(`🗑️ Lazy Deletion triggered: User ${user.email} permanently deleted.`);
+      console.log(
+        `🗑️ Lazy Deletion triggered: User ${user.email} permanently deleted.`
+      );
 
       return next(
         new AppError(
@@ -252,7 +268,7 @@ exports.login = catchAsync(async (req, res, next) => {
           403
         )
       );
-    } 
+    }
     // ⏳ الحالة الثانية: مهلة الـ 3 أيام لم تنتهِ (منع الدخول فقط)
     else {
       const remainingTime = new Date(user.suspensionExpires).toLocaleString();
@@ -355,7 +371,7 @@ exports.forgotPassword = catchAsync(async (req, res, next) => {
   });
 
   const resetURL = `https://careerpro.me/reset-password?token=${resetToken}`;
-  
+
   // Custom HTML for Reset Email
   const resetHtml = `
     <!DOCTYPE html>
