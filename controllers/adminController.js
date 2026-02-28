@@ -125,26 +125,27 @@ exports.getJobSeekers = catchAsync(async (req, res, next) => {
   const { search } = req.query;
 
   let query = JobSeeker.find().populate({
-    path: "authId",
-    select: "email isVerified createdAt", 
+    path: 'authId',
+    select:
+      'email isVerified createdAt status suspensionExpires suspensionReason',
   });
 
   if (search) {
     query = query.find({
       $or: [
-        { firstName: { $regex: search, $options: "i" } },
-        { lastName: { $regex: search, $options: "i" } },
-        { fullName: { $regex: search, $options: "i" } } 
-      ]
+        { firstName: { $regex: search, $options: 'i' } },
+        { lastName: { $regex: search, $options: 'i' } },
+        { fullName: { $regex: search, $options: 'i' } },
+      ],
     });
   }
 
-  const seekers = await query.sort("-createdAt");
+  const seekers = await query.sort('-createdAt');
 
-  const cleanSeekers = seekers.filter(item => item.authId);
+  const cleanSeekers = seekers.filter((item) => item.authId);
 
   res.status(200).json({
-    status: "success",
+    status: 'success',
     results: cleanSeekers.length,
     data: {
       users: cleanSeekers,
@@ -159,19 +160,20 @@ exports.getCompanies = catchAsync(async (req, res, next) => {
   const { search } = req.query;
 
   let query = Company.find().populate({
-    path: "authId",
-    select: "email isVerified createdAt",
+    path: 'authId',
+    select:
+      'email isVerified createdAt status suspensionExpires suspensionReason',
   });
 
   if (search) {
-    query = query.find({ companyName: { $regex: search, $options: "i" } });
+    query = query.find({ companyName: { $regex: search, $options: 'i' } });
   }
 
-  const companies = await query.sort("-createdAt");
-  const cleanCompanies = companies.filter(item => item.authId);
+  const companies = await query.sort('-createdAt');
+  const cleanCompanies = companies.filter((item) => item.authId);
 
   res.status(200).json({
-    status: "success",
+    status: 'success',
     results: cleanCompanies.length,
     data: {
       users: cleanCompanies,
@@ -183,34 +185,34 @@ exports.getCompanies = catchAsync(async (req, res, next) => {
 // 6. Delete User (Updated to handle ID from different collections)
 // ============================================================
 exports.deleteUser = catchAsync(async (req, res, next) => {
-  const { id } = req.params; 
-  const { type } = req.query; 
+  const { id } = req.params;
+  const { type } = req.query;
 
   let authIdToDelete = id;
 
   if (type === 'job_seeker') {
-      const seeker = await JobSeeker.findById(id);
-      if (seeker) authIdToDelete = seeker.authId;
+    const seeker = await JobSeeker.findById(id);
+    if (seeker) authIdToDelete = seeker.authId;
   } else if (type === 'company') {
-      const company = await Company.findById(id);
-      if (company) authIdToDelete = company.authId;
+    const company = await Company.findById(id);
+    if (company) authIdToDelete = company.authId;
   }
 
   const user = await Authentication.findByIdAndDelete(authIdToDelete);
 
   if (!user) {
-    return next(new AppError("No user found with that ID", 404));
+    return next(new AppError('No user found with that ID', 404));
   }
 
-  if (user.accountType === "job_seeker") {
+  if (user.accountType === 'job_seeker') {
     await JobSeeker.findOneAndDelete({ authId: user._id });
-  } else if (user.accountType === "company") {
+  } else if (user.accountType === 'company') {
     const comp = await Company.findOneAndDelete({ authId: user._id });
     if (comp) await Job.deleteMany({ companyId: comp._id });
   }
 
   res.status(204).json({
-    status: "success",
+    status: 'success',
     data: null,
   });
 });
@@ -267,7 +269,6 @@ exports.deleteJob = catchAsync(async (req, res, next) => {
     data: null,
   });
 });
-
 
 // ============================================================
 // 7. Suspend User (Temporary 3-Day Ban)
@@ -349,7 +350,7 @@ exports.reactivateUser = catchAsync(async (req, res, next) => {
     {
       status: 'active',
       suspensionExpires: null, // تصفير العداد
-      suspensionReason: null,  // مسح سبب المخالفة
+      suspensionReason: null, // مسح سبب المخالفة
     },
     { new: true, runValidators: true }
   );
