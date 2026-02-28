@@ -217,24 +217,13 @@ exports.login = catchAsync(async (req, res, next) => {
     return next(new AppError('Incorrect email or password', 401));
   }
 
-  if (user.status === 'suspended') {
-    if (user.suspensionExpires && user.suspensionExpires > Date.now()) {
-      return next(
-        new AppError(
-          `Your account has been suspended for violating our policy. You can regain access after ${user.suspensionExpires.toLocaleString()}. For appeals, contact support at: careerguidanceapp001@gmail.com`,
-          403
-        )
-      );
-    }
-    
-    user.status = 'active';
-    user.suspensionExpires = undefined;
-    user.suspensionReason = undefined;
-    await user.save({ validateBeforeSave: false });
-  }
-
   if (!user.isVerified) {
-    return next(new AppError('Your account is not verified. Please check your email.', 403));
+    return next(
+      new AppError(
+        'Your account is not verified. Please check your email.',
+        403
+      )
+    );
   }
 
   const token = signToken(user._id);
