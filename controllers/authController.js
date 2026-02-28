@@ -7,6 +7,7 @@ const catchAsync = require('../utils/catchAsync');
 const AppError = require('../utils/AppError');
 const crypto = require('crypto');
 const sendEmail = require('../utils/email'); //
+const Job = require('../models/Job');
 
 // Helper Function to generate JWT
 const signToken = (id) => {
@@ -212,10 +213,58 @@ exports.login = catchAsync(async (req, res, next) => {
   if (!email || !password)
     return next(new AppError('Please provide email and password!', 400));
 
+  // استدعاء المستخدم مع الباسورد
   const user = await Authentication.findOne({ email }).select('+password');
   if (!user || !(await user.correctPassword(password, user.password))) {
     return next(new AppError('Incorrect email or password', 401));
   }
+
+  // ============================================================
+  // 💡 Lazy Deletion & Suspension Logic (التعديل الجديد)
+  // ============================================================
+  if (user.status === 'suspended') {
+    const now = Date.now();
+    const expiryDate = new Date(user.suspensionExpires).getTime();
+
+    // ❌ الحالة الأولى: انتهت مهلة الـ 3 أيام (إعدام الحساب)
+    if (now > expiryDate) {
+      // 1. مسح البروفايل الخاص بالمستخدم والوظائف لو كان شركة
+      if (user.accountType === 'job_seeker') {
+        await JobSeeker.findOneAndDelete({ authId: user._id });
+      } else if (user.accountType === 'company') {
+        const comp = await Company.findOneAndDelete({ authId: user._id });
+        if (comp) {
+           await Job.deleteMany({ companyId: comp._id });
+        }
+      }
+
+      // 2. مسح أي توكنز قديمة (زي الإيميل أو نسيان الباسورد)
+      await AuthToken.deleteMany({ authId: user._id });
+
+      // 3. مسح حساب الدخول الأساسي
+      await Authentication.findByIdAndDelete(user._id);
+
+      console.log(`🗑️ Lazy Deletion triggered: User ${user.email} permanently deleted.`);
+
+      return next(
+        new AppError(
+          'Your account has been permanently deleted because the 3-day appeal period has expired.',
+          403
+        )
+      );
+    } 
+    // ⏳ الحالة الثانية: مهلة الـ 3 أيام لم تنتهِ (منع الدخول فقط)
+    else {
+      const remainingTime = new Date(user.suspensionExpires).toLocaleString();
+      return next(
+        new AppError(
+          `Your account is suspended due to policy violations. You have until ${remainingTime} to appeal. Please contact support at careerguidanceapp001@gmail.com`,
+          403
+        )
+      );
+    }
+  }
+  // ============================================================
 
   if (!user.isVerified) {
     return next(
