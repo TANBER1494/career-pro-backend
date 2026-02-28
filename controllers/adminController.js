@@ -266,3 +266,50 @@ exports.deleteJob = catchAsync(async (req, res, next) => {
     data: null,
   });
 });
+
+
+// ============================================================
+// 7. Suspend User (Temporary 3-Day Ban)
+// ============================================================
+exports.suspendUser = catchAsync(async (req, res, next) => {
+  const { id } = req.params;
+  const { reason } = req.body;
+
+  if (!reason) {
+    return next(new AppError('Please provide a reason for suspension', 400));
+  }
+
+  // 1. Calculate Suspension Expiry (3 Days from now)
+  const threeDaysInMs = 3 * 24 * 60 * 60 * 1000;
+  const suspensionExpires = new Date(Date.now() + threeDaysInMs);
+
+  // 2. Find and Update the Authentication record
+  const user = await Authentication.findByIdAndUpdate(
+    id,
+    {
+      status: 'suspended',
+      suspensionExpires: suspensionExpires,
+      suspensionReason: reason,
+    },
+    { new: true, runValidators: true }
+  );
+
+  if (!user) {
+    return next(new AppError('No user found with that ID', 404));
+  }
+
+  console.log(`⚠️ Admin suspended user: ${user.email} until ${suspensionExpires}`);
+
+  res.status(200).json({
+    status: 'success',
+    message: `User account has been suspended until ${suspensionExpires.toLocaleString()}`,
+    data: {
+      user: {
+        id: user._id,
+        email: user.email,
+        status: user.status,
+        suspensionExpires: user.suspensionExpires,
+      },
+    },
+  });
+});

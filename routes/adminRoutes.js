@@ -16,7 +16,7 @@ router.patch(
 router.get('/stats', adminController.getDashboardStats);
 router.get("/users/seekers", adminController.getJobSeekers);
 router.get("/users/companies", adminController.getCompanies);
-
+router.patch('/users/:id/suspend', adminController.suspendUser);
 router.delete("/users/:id", adminController.deleteUser);
 
 router.get("/jobs", adminController.getAllJobs);
