@@ -5,7 +5,7 @@ const catchAsync = require("../utils/catchAsync");
 const Authentication = require("../models/Authentication");
 
 exports.protect = catchAsync(async (req, res, next) => {
-  // 1) Getting token and check of it's there
+  // 1) Getting token and check if it's there
   let token;
   if (
     req.headers.authorization &&
@@ -34,17 +34,29 @@ exports.protect = catchAsync(async (req, res, next) => {
     );
   }
 
+  // ============================================================
+  // 💡 3.5) Security Check: Prevent Suspended Users (التعديل الجديد)
+  // ============================================================
+  if (currentUser.status === 'suspended') {
+    return next(
+      new AppError(
+        "Access Denied. Your account has been suspended due to policy violations. Please log in again to check your status or contact support.",
+        403
+      )
+    );
+  }
+  // ============================================================
+
   // 4) Check if user changed password after the token was issued
   // (We can implement changedPasswordAfter method in model later if needed)
 
   // GRANT ACCESS TO PROTECTED ROUTE
-  req.user = currentUser; // Important: We save user info in req to use it in next middlewares
+  req.user = currentUser; 
   next();
 });
 
 exports.restrictTo = (...roles) => {
   return (req, res, next) => {
-    // roles ['admin', 'company']. role='job_seeker'
     if (!roles.includes(req.user.accountType)) {
       return next(
         new AppError("You do not have permission to perform this action", 403)
@@ -54,10 +66,8 @@ exports.restrictTo = (...roles) => {
   };
 };
 
-
 // Middleware لمنع المستخدمين غير المكتملين من الوصول للميزات الأساسية
 exports.requireCompleteProfile = catchAsync(async (req, res, next) => {
-  // بنفترض إنك بتستخدم authMiddleware.protect قبله، فـ req.user موجودة
   if (req.user.registrationStep < 4) {
     return next(
       new AppError('You must complete your profile setup to access this feature.', 403)
