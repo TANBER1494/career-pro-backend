@@ -29,8 +29,8 @@ const app = express();
 app.set('trust proxy', 1);
 
 // 1. Set Security HTTP Headers
-app.use(helmet());
-app.use(helmet.crossOriginResourcePolicy({ policy: 'cross-origin' }));
+//app.use(helmet());
+//app.use(helmet.crossOriginResourcePolicy({ policy: 'cross-origin' }));
 
 // 2. CORS Configuration (Dynamic & Robust for Vercel/Localhost)
 const corsOptions = {
