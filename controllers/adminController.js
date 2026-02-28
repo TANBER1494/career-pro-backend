@@ -336,3 +336,65 @@ exports.suspendUser = catchAsync(async (req, res, next) => {
     data: { user },
   });
 });
+
+// ============================================================
+// 8. Reactivate User (Lift Suspension)
+// ============================================================
+exports.reactivateUser = catchAsync(async (req, res, next) => {
+  const { id } = req.params;
+
+  // 1. تحديث حالة المستخدم وإزالة قيود الإيقاف
+  const user = await Authentication.findByIdAndUpdate(
+    id,
+    {
+      status: 'active',
+      suspensionExpires: null, // تصفير العداد
+      suspensionReason: null,  // مسح سبب المخالفة
+    },
+    { new: true, runValidators: true }
+  );
+
+  if (!user) {
+    return next(new AppError('No user found with that ID', 404));
+  }
+
+  // 2. إعداد إيميل التهنئة بالتفعيل (خطوة احترافية لغلق دائرة التواصل)
+  const reactivationHtml = `
+    <div style="font-family: sans-serif; max-width: 600px; margin: auto; border: 1px solid #eee; padding: 20px;">
+      <h2 style="color: #5cb85c;">Account Reactivated ✅</h2>
+      <p>Dear User,</p>
+      <p>Good news! After reviewing your appeal, our support team has successfully <b>reactivated</b> your account.</p>
+      <p>You can now log in and use all our services normally. We appreciate your cooperation and commitment to our community guidelines.</p>
+      <p style="text-align: center; margin-top: 30px;">
+        <a href="https://careerpro.me/login" style="background-color: #5cb85c; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; font-weight: bold;">Log In Now</a>
+      </p>
+      <p style="margin-top: 30px;">Best regards,<br>CareerPro Support Team</p>
+    </div>
+  `;
+
+  // 3. إرسال الإيميل
+  try {
+    await sendEmail({
+      email: user.email,
+      subject: 'Account Reactivated Successfully ✅',
+      message: 'Your account has been reactivated. You can now log in.',
+      html: reactivationHtml,
+    });
+  } catch (err) {
+    console.error('⚠️ Reactivation email failed to send:', err);
+  }
+
+  console.log(`✅ Admin reactivated user: ${user.email}`);
+
+  res.status(200).json({
+    status: 'success',
+    message: 'User account has been successfully reactivated and notified.',
+    data: {
+      user: {
+        id: user._id,
+        email: user.email,
+        status: user.status,
+      },
+    },
+  });
+});
