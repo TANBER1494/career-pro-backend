@@ -39,14 +39,19 @@ const allowedOrigins = [
   'https://careerpro.works',
   'https://www.careerpro.works', 
   'http://localhost:5173',
+  'https://career-pro-backend-git-fe-1043e2-mohamed-abdelkhalek-s-projects.vercel.app'
 ];
 
-// 2. CORS Configuration (Dynamic Testing Mode)
 app.use(
   cors({
     origin: function (origin, callback) {
-      // الكود ده بيقبل أي فرونت إند يكلمه ديناميكياً وبيرد عليه باسمه عشان يتخطى حماية المتصفح
-      callback(null, true); 
+      // السماح بالطلبات اللي ملهاش Origin (زي الـ Mobile apps أو Postman)
+      // أو الطلبات اللي موجودة في القائمة بتاعتنا
+      if (!origin || allowedOrigins.indexOf(origin) !== -1) {
+        callback(null, true);
+      } else {
+        callback(new Error('Not allowed by CORS'));
+      }
     },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
