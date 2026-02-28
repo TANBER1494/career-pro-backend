@@ -39,7 +39,7 @@ const allowedOrigins = [
   'https://careerpro.works',
   'https://www.careerpro.works', 
   'http://localhost:5173',
-  'https://career-pro-backend-git-fe-1043e2-mohamed-abdelkhalek-s-projects.vercel.app'
+  "http://127.0.0.1:5173"
 ];
 
 app.use(
