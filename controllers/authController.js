@@ -22,9 +22,23 @@ const signToken = (id) => {
 // ============================================================
 
 exports.signup = catchAsync(async (req, res, next) => {
+  const { email } = req.body;
+  
+  if (email) {
+    const isBanned = await Blacklist.findOne({ email: email.toLowerCase() });
+    
+    if (isBanned) {
+      console.log(`🛡️ Blacklist block triggered for email: ${email}`);
+      return next(
+        new AppError(
+          'This email is permanently banned from our platform due to policy violations.',
+          403
+        )
+      );
+    }
+  }
   // 1. Get user input
   const {
-    email,
     password,
     passwordConfirm,
     accountType,
@@ -229,14 +243,13 @@ exports.login = catchAsync(async (req, res, next) => {
 
     // ❌ الحالة الأولى: انتهت مهلة الـ 3 أيام (إعدام الحساب)
     if (now > expiryDate) {
+      
       // ==========================================
       // 🚨 0. إضافة الإيميل للقائمة السوداء قبل الحذف (التعديل الجديد)
       // ==========================================
       await Blacklist.create({
         email: user.email,
-        reason:
-          user.suspensionReason ||
-          'Account deleted after suspension period expired',
+        reason: user.suspensionReason || 'Account deleted after suspension period expired'
       });
       console.log(`🚫 Blacklist Updated: ${user.email} is permanently banned.`);
       // ==========================================
@@ -247,7 +260,7 @@ exports.login = catchAsync(async (req, res, next) => {
       } else if (user.accountType === 'company') {
         const comp = await Company.findOneAndDelete({ authId: user._id });
         if (comp) {
-          await Job.deleteMany({ companyId: comp._id });
+           await Job.deleteMany({ companyId: comp._id });
         }
       }
 
@@ -258,9 +271,7 @@ exports.login = catchAsync(async (req, res, next) => {
       // 3. مسح حساب الدخول الأساسي
       await Authentication.findByIdAndDelete(user._id);
 
-      console.log(
-        `🗑️ Lazy Deletion triggered: User ${user.email} permanently deleted.`
-      );
+      console.log(`🗑️ Lazy Deletion triggered: User ${user.email} permanently deleted.`);
 
       return next(
         new AppError(
@@ -371,7 +382,7 @@ exports.forgotPassword = catchAsync(async (req, res, next) => {
   });
 
   const resetURL = `https://careerpro.me/reset-password?token=${resetToken}`;
-
+  
   // Custom HTML for Reset Email
   const resetHtml = `
     <!DOCTYPE html>
