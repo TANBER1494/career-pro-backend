@@ -1,12 +1,12 @@
-const mongoose = require("mongoose");
+const mongoose = require('mongoose');
 
 const jobSeekerSchema = new mongoose.Schema(
   {
     // ربط المستخدم بجدول المصادقة (Auth)
     authId: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "Authentication",
-      required: [true, "Auth ID is required"],
+      ref: 'Authentication',
+      required: [true, 'Auth ID is required'],
       unique: true,
     },
 
@@ -14,16 +14,16 @@ const jobSeekerSchema = new mongoose.Schema(
     fullName: {
       type: String,
       trim: true,
-      default: "",
+      default: '',
     },
     profilePicture: {
       type: String,
-      default: "", 
+      default: '',
     },
     jobTitle: {
       type: String,
       trim: true,
-      default: "",
+      default: '',
     },
     summary: {
       type: String,
@@ -54,7 +54,7 @@ const jobSeekerSchema = new mongoose.Schema(
     },
     gender: {
       type: String,
-      enum: ["male", "female", "other", "prefer_not_to_say"],
+      enum: ['male', 'female', 'other', 'prefer_not_to_say'],
       lowercase: true, // لضمان التوافق مع الفرونت إند (Male -> male)
     },
 
@@ -115,9 +115,15 @@ const jobSeekerSchema = new mongoose.Schema(
     savedJobs: [
       {
         type: mongoose.Schema.Types.ObjectId,
-        ref: "Job",
+        ref: 'Job',
       },
     ],
+
+    mbtiType: {
+      type: String,
+      trim: true,
+      uppercase: true, // عشان لو دخلت intj تتحفظ INTJ
+    },
 
     // حقل لتخزين نتائج تحليل الشخصية بالذكاء الاصطناعي مستقبلاً
     personalityProfile: {
@@ -135,6 +141,6 @@ jobSeekerSchema.index({ jobTitle: 1 });
 jobSeekerSchema.index({ location: 1 });
 jobSeekerSchema.index({ industry: 1 });
 
-const JobSeeker = mongoose.model("JobSeeker", jobSeekerSchema);
+const JobSeeker = mongoose.model('JobSeeker', jobSeekerSchema);
 
 module.exports = JobSeeker;

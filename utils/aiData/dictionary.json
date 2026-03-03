@@ -1,0 +1,450 @@
+{
+    "INTJ": {
+        "title": "The Architect",
+        "description": "Imaginative and strategic thinkers, with a plan for everything.",
+        "traits": [
+            "Strategic",
+            "Logical",
+            "Independent",
+            "Visionary"
+        ],
+        "suggestedCareers": [
+            {
+                "title": "Software Architect",
+                "reason": "Matches your analytical thinking and love for complex systems."
+            },
+            {
+                "title": "Data Scientist",
+                "reason": "Requires strong logical reasoning and pattern recognition."
+            },
+            {
+                "title": "Strategic Planner",
+                "reason": "Fits your ability to see the big picture and plan ahead."
+            },
+            {
+                "title": "Investment Banker",
+                "reason": "Demands high-level analysis and long-term strategy."
+            }
+        ]
+    },
+    "INTP": {
+        "title": "The Logician",
+        "description": "Innovative inventors with an unquenchable thirst for knowledge.",
+        "traits": [
+            "Curious",
+            "Objective",
+            "Abstract",
+            "Analyst"
+        ],
+        "suggestedCareers": [
+            {
+                "title": "Computer Programmer",
+                "reason": "Perfect environment for deep logic and problem-solving."
+            },
+            {
+                "title": "University Professor",
+                "reason": "Allows deep research and theoretical exploration."
+            },
+            {
+                "title": "Forensic Scientist",
+                "reason": "Utilizes your attention to detail and objective analysis."
+            },
+            {
+                "title": "Mathematician",
+                "reason": "Pure logic and abstract theories appeal to your mind."
+            }
+        ]
+    },
+    "ENTJ": {
+        "title": "The Commander",
+        "description": "Bold, imaginative and strong-willed leaders, always finding a way - or making one.",
+        "traits": [
+            "Assertive",
+            "Confident",
+            "Decisive",
+            "Efficient"
+        ],
+        "suggestedCareers": [
+            {
+                "title": "Chief Executive Officer (CEO)",
+                "reason": "Natural leadership abilities and strategic vision."
+            },
+            {
+                "title": "Management Consultant",
+                "reason": "Ability to analyze and fix organizational inefficiencies."
+            },
+            {
+                "title": "Project Manager",
+                "reason": "Strong organizational and directive skills."
+            },
+            {
+                "title": "Judge",
+                "reason": "Requires decisive decision-making and authority."
+            }
+        ]
+    },
+    "ENTP": {
+        "title": "The Debater",
+        "description": "Smart and curious thinkers who cannot resist an intellectual challenge.",
+        "traits": [
+            "Creative",
+            "Debater",
+            "Knowledgeable",
+            "Adaptable"
+        ],
+        "suggestedCareers": [
+            {
+                "title": "Entrepreneur",
+                "reason": "Thrives on risk, innovation, and new ideas."
+            },
+            {
+                "title": "Marketing Director",
+                "reason": "Uses creativity to influence and persuade others."
+            },
+            {
+                "title": "Product Manager",
+                "reason": "Combines innovation with strategic product vision."
+            },
+            {
+                "title": "Stock Trader",
+                "reason": "Requires quick thinking and adaptability."
+            }
+        ]
+    },
+    "INFJ": {
+        "title": "The Advocate",
+        "description": "Quiet and mystical, yet very inspiring and tireless idealists.",
+        "traits": [
+            "Insightful",
+            "Altruistic",
+            "Creative",
+            "Principled"
+        ],
+        "suggestedCareers": [
+            {
+                "title": "Counselor / Psychotherapist",
+                "reason": "Uses deep empathy to help others grow and heal."
+            },
+            {
+                "title": "HR Manager",
+                "reason": "Understanding human potential fits your nature perfectly."
+            },
+            {
+                "title": "Writer / Author",
+                "reason": "Allows expression of deep thoughts and complex ideals."
+            },
+            {
+                "title": "Non-Profit Organizer",
+                "reason": "Driven by a cause and helping humanity."
+            }
+        ]
+    },
+    "INFP": {
+        "title": "The Mediator",
+        "description": "Poetic, kind and altruistic people, always eager to help a good cause.",
+        "traits": [
+            "Empathetic",
+            "Idealistic",
+            "Adaptable",
+            "Creative"
+        ],
+        "suggestedCareers": [
+            {
+                "title": "UX/UI Designer",
+                "reason": "Focuses on user empathy combined with visual creativity."
+            },
+            {
+                "title": "Physical Therapist",
+                "reason": "Helping individuals heal in a personal way."
+            },
+            {
+                "title": "Content Creator",
+                "reason": "Expressing authentic values and storytelling."
+            },
+            {
+                "title": "Editor",
+                "reason": "Working with ideas and language in a peaceful environment."
+            }
+        ]
+    },
+    "ENFJ": {
+        "title": "The Protagonist",
+        "description": "Charismatic and inspiring leaders, able to mesmerize their listeners.",
+        "traits": [
+            "Charismatic",
+            "Altruistic",
+            "Leader",
+            "Persuasive"
+        ],
+        "suggestedCareers": [
+            {
+                "title": "Public Relations Manager",
+                "reason": "Exceptional communication and people skills."
+            },
+            {
+                "title": "Sales Manager",
+                "reason": "Ability to persuade, motivate, and lead teams."
+            },
+            {
+                "title": "Corporate Trainer",
+                "reason": "Helping others develop their skills and potential."
+            },
+            {
+                "title": "Art Director",
+                "reason": "Leading creative teams with vision and harmony."
+            }
+        ]
+    },
+    "ENFP": {
+        "title": "The Campaigner",
+        "description": "Enthusiastic, creative and sociable free spirits, who can always find a reason to smile.",
+        "traits": [
+            "Enthusiastic",
+            "Creative",
+            "Social",
+            "Energetic"
+        ],
+        "suggestedCareers": [
+            {
+                "title": "Journalist",
+                "reason": "Satisfies your curiosity about people and their stories."
+            },
+            {
+                "title": "Event Planner",
+                "reason": "Combines creativity with dynamic social interaction."
+            },
+            {
+                "title": "Creative Director",
+                "reason": "Leading teams with vision, energy, and open-mindedness."
+            },
+            {
+                "title": "Travel Writer",
+                "reason": "Exploration and sharing experiences with others."
+            }
+        ]
+    },
+    "ISTJ": {
+        "title": "The Logistician",
+        "description": "Practical and fact-minded individuals, whose reliability cannot be doubted.",
+        "traits": [
+            "Responsible",
+            "Sincere",
+            "Practical",
+            "Orderly"
+        ],
+        "suggestedCareers": [
+            {
+                "title": "Accountant / CPA",
+                "reason": "Requires precision, order, and adherence to rules."
+            },
+            {
+                "title": "Supply Chain Manager",
+                "reason": "Organizing complex logistics efficiently and reliably."
+            },
+            {
+                "title": "Database Administrator",
+                "reason": "Maintaining structure, data integrity, and order."
+            },
+            {
+                "title": "Military Officer",
+                "reason": "Thriving in hierarchy, structure, and duty."
+            }
+        ]
+    },
+    "ISFJ": {
+        "title": "The Defender",
+        "description": "Very dedicated and warm protectors, always ready to defend their loved ones.",
+        "traits": [
+            "Warm",
+            "Protective",
+            "Dedicated",
+            "Supportive"
+        ],
+        "suggestedCareers": [
+            {
+                "title": "Nurse",
+                "reason": "Practical care for others in a structured, supportive way."
+            },
+            {
+                "title": "Office Manager",
+                "reason": "Keeping the workplace running smoothly and harmoniously."
+            },
+            {
+                "title": "Technical Support Specialist",
+                "reason": "Patiently helping users fix specific problems."
+            },
+            {
+                "title": "Elementary Teacher",
+                "reason": "Nurturing and educating with patience and care."
+            }
+        ]
+    },
+    "ESTJ": {
+        "title": "The Executive",
+        "description": "Excellent administrators, unsurpassed at managing things - or people.",
+        "traits": [
+            "Organized",
+            "Dedication",
+            "Honest",
+            "Practical"
+        ],
+        "suggestedCareers": [
+            {
+                "title": "Operations Manager",
+                "reason": "Ensuring efficiency, organization, and following procedures."
+            },
+            {
+                "title": "Financial Auditor",
+                "reason": "Detailed checking and strict adherence to standards."
+            },
+            {
+                "title": "Judge",
+                "reason": "Upholding the law, facts, and established rules."
+            },
+            {
+                "title": "Bank Manager",
+                "reason": "Managing systems, money, and people effectively."
+            }
+        ]
+    },
+    "ESFJ": {
+        "title": "The Consul",
+        "description": "Extraordinarily caring, social and popular people, always eager to help.",
+        "traits": [
+            "Caring",
+            "Social",
+            "Loyal",
+            "Helpful"
+        ],
+        "suggestedCareers": [
+            {
+                "title": "Real Estate Agent",
+                "reason": "Helping people find homes through strong social connection."
+            },
+            {
+                "title": "Medical Assistant",
+                "reason": "Direct patient care within a structured environment."
+            },
+            {
+                "title": "Account Manager",
+                "reason": "Building and maintaining strong client relationships."
+            },
+            {
+                "title": "Event Coordinator",
+                "reason": "Creating organized, happy experiences for others."
+            }
+        ]
+    },
+    "ISTP": {
+        "title": "The Virtuoso",
+        "description": "Bold and practical experimenters, masters of all kinds of tools.",
+        "traits": [
+            "Bold",
+            "Practical",
+            "Experimenter",
+            "Logical"
+        ],
+        "suggestedCareers": [
+            {
+                "title": "Civil Engineer",
+                "reason": "Solving tangible problems with mechanics and logic."
+            },
+            {
+                "title": "Pilot",
+                "reason": "Mastering complex tools and reacting to physical environments."
+            },
+            {
+                "title": "Mechanic",
+                "reason": "Hands-on troubleshooting and fixing of systems."
+            },
+            {
+                "title": "Forensic Analyst",
+                "reason": "Using logic and observation to solve physical puzzles."
+            }
+        ]
+    },
+    "ISFP": {
+        "title": "The Adventurer",
+        "description": "Flexible and charming artists, always ready to explore and experience something new.",
+        "traits": [
+            "Artistic",
+            "Charming",
+            "Sensitive",
+            "Spontaneous"
+        ],
+        "suggestedCareers": [
+            {
+                "title": "Graphic Designer",
+                "reason": "Expressing aesthetic sense and creativity visually."
+            },
+            {
+                "title": "Chef",
+                "reason": "Creating immediate sensory experiences for others."
+            },
+            {
+                "title": "Veterinarian",
+                "reason": "Caring for animals with a gentle, hands-on approach."
+            },
+            {
+                "title": "Landscape Architect",
+                "reason": "Blending nature with design and aesthetics."
+            }
+        ]
+    },
+    "ESTP": {
+        "title": "The Entrepreneur",
+        "description": "Smart, energetic and very perceptive people, who truly enjoy living on the edge.",
+        "traits": [
+            "Energetic",
+            "Perceptive",
+            "Direct",
+            "Risk-taker"
+        ],
+        "suggestedCareers": [
+            {
+                "title": "Stockbroker",
+                "reason": "High-stakes, fast-paced decision making."
+            },
+            {
+                "title": "Sales Representative",
+                "reason": "Direct interaction and results-driven environment."
+            },
+            {
+                "title": "Police Officer / Detective",
+                "reason": "Reacting quickly to changing physical situations."
+            },
+            {
+                "title": "Sports Coach",
+                "reason": "Strategy combined with physical action and motivation."
+            }
+        ]
+    },
+    "ESFP": {
+        "title": "The Entertainer",
+        "description": "Spontaneous, energetic and enthusiastic people - life is never boring around them.",
+        "traits": [
+            "Spontaneous",
+            "Energetic",
+            "Enthusiastic",
+            "Fun"
+        ],
+        "suggestedCareers": [
+            {
+                "title": "Tour Guide",
+                "reason": "Constant social interaction and excitement."
+            },
+            {
+                "title": "Actor / Performer",
+                "reason": "Being the center of attention and entertaining others."
+            },
+            {
+                "title": "Customer Success Manager",
+                "reason": "Making people happy and solving problems instantly."
+            },
+            {
+                "title": "Fashion Stylist",
+                "reason": "Working with aesthetics, people, and trends."
+            }
+        ]
+    }
+}
