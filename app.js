@@ -20,6 +20,7 @@ const jobSeekerRouter = require('./routes/jobSeekerRoutes');
 const companyRouter = require('./routes/companyRoutes');
 const jobRouter = require('./routes/jobRoutes');
 const applicationRouter = require('./routes/applicationRoutes');
+const personalityRouter = require('./routes/personalityRoutes');
 
 const app = express();
 
@@ -118,10 +119,15 @@ app.use('/api/v1/companies', companyRouter);
 app.use('/api/v1/jobs', jobRouter);
 app.use('/api/v1/applications', applicationRouter);
 
+
+app.use('/api/v1/personality', personalityRouter);
+
 // ================= ERROR HANDLING =================
 app.all(/(.*)/, (req, res, next) => {
   next(new AppError(`Can't find ${req.originalUrl} on this server!`, 404));
 });
+
+
 
 app.use(globalErrorHandler);
 

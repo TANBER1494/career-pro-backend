@@ -1,13 +1,13 @@
-const axios = require("axios");
-const AppError = require("./AppError");
+const axios = require('axios');
+const AppError = require('./AppError');
 
 class AiService {
   constructor() {
     this.client = axios.create({
-      baseURL: process.env.AI_SERVICE_URL || "http://127.0.0.1:5000",
+      baseURL: process.env.AI_SERVICE_URL || 'http://127.0.0.1:5000',
       timeout: 10000, // Wait for 10 seconds max
       headers: {
-        "Content-Type": "application/json",
+        'Content-Type': 'application/json',
       },
     });
   }
@@ -31,9 +31,9 @@ class AiService {
       console.error(`AI Service Error [${endpoint}]:`, error.message);
 
       // If AI server is down
-      if (error.code === "ECONNREFUSED") {
+      if (error.code === 'ECONNREFUSED') {
         throw new AppError(
-          "AI Service is currently unavailable. Please try again later.",
+          'AI Service is currently unavailable. Please try again later.',
           503
         );
       }
@@ -41,12 +41,12 @@ class AiService {
       // If AI returned an error response (e.g., 400, 500)
       if (error.response) {
         throw new AppError(
-          error.response.data.message || "Error processing request by AI.",
+          error.response.data.message || 'Error processing request by AI.',
           error.response.status
         );
       }
 
-      throw new AppError("Internal Server Error during AI communication.", 500);
+      throw new AppError('Internal Server Error during AI communication.', 500);
     }
   }
 
@@ -54,18 +54,47 @@ class AiService {
 
   async analyzeCV(filePath) {
     // Send file path to AI to read and analyze
-    return await this._request("POST", "/analyze-cv", { filePath });
+    return await this._request('POST', '/analyze-cv', { filePath });
   }
 
   async matchJobs(seekerProfile, jobList) {
-    return await this._request("POST", "/match-jobs", {
+    return await this._request('POST', '/match-jobs', {
       seekerProfile,
       jobList,
     });
   }
 
+  // ============================================================
+  // 💡 Personality Test AI Integration (With Mock Mode)
+  // ============================================================
   async analyzePersonality(answers) {
-    return await this._request("POST", "/analyze-personality", { answers });
+    // 1. Reshape from Vector (1D) to Matrix (2D)
+    // الإجابات جاية كده: [1, 5, 3, ...]
+    // الموديل عايزها كده: [[1, 5, 3, ...]]
+    const reshapedAnswers = [answers];
+
+    // --------------------------------------------------------
+    // 🟢 MOCK MODE: وضع المحاكاة (يُستخدم حالياً للتطوير)
+    // --------------------------------------------------------
+    console.log('🤖 [MOCK] AI Service received Matrix:', reshapedAnswers);
+
+    // محاكاة تأخير الشبكة (1 ثانية) عشان الفرونت إند يختبر الـ Loader
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+
+    // توليد رقم عشوائي من 0 إلى 15 (يمثل الـ 16 شخصية)
+    const mockPredictionIndex = Math.floor(Math.random() * 16);
+    console.log(`[MOCK] AI Model predicted index: ${mockPredictionIndex}`);
+
+    return { prediction: mockPredictionIndex };
+
+    // --------------------------------------------------------
+    // 🔴 REAL MODE: وضع الإنتاج (يُفعل عند استلام رابط Azure)
+    // --------------------------------------------------------
+    /*
+    return await this._request("POST", "/predict-mbti", { 
+      features: reshapedAnswers 
+    });
+    */
   }
 }
 
