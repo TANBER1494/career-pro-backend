@@ -73,7 +73,7 @@ const limiter = rateLimit({
   // 💡 إخراس تام لكل تحذيرات Vercel Headers عشان السيرفر ميضربش 500
  validate: false
 });
-app.use('/api', limiter);
+//app.use('/api', limiter);
 
 // 5. Body Parsers (CRITICAL FOR VANILLA JS)
 // - Parses application/json (fetch API with JSON stringify)
