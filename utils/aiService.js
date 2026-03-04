@@ -65,19 +65,14 @@ class AiService {
   }
 
   // ============================================================
-  // 💡 Personality Test AI Integration (With Mock Mode)
-  // ============================================================
-  // ============================================================
   // 🚀 Personality Test AI Integration (REAL AZURE MODE)
   // ============================================================
   async analyzePersonality(answers) {
     try {
-      // 💡 السحر هنا: تحويل القيم من (1-7) إلى (-3 إلى +3) لتطابق الموديل
       const mappedAnswers = answers.map(val => val - 4);
       
       console.log("🚀 [REAL MODE] Sending to Azure:", { answers: mappedAnswers });
 
-      // 1. إرسال الداتا للموديل
       const response = await axios.post(
         "https://careerpro-api-accub9c9gncuewd7.swedencentral-01.azurewebsites.net/predict",
         {
@@ -87,25 +82,20 @@ class AiService {
 
       console.log("✅ [AZURE RESPONSE]:", response.data);
 
-      // 2. استخراج النتيجة
-      const predictedIndex = response.data.prediction || response.data.prediction_index || response.data[0] || response.data; 
+      // 💡 التعديل هنا: نستخرج كود الشخصية فقط (ENTJ مثلاً) من الأوبجكت
+      const mbtiCode = response.data.personality; 
 
-      return { prediction: predictedIndex };
+      // إرجاع الكود للكنترولر عشان يكمل شغله الطبيعي
+      return { prediction: mbtiCode };
       
     } catch (error) {
-      // 🚨 تسجيل الخطأ بالتفصيل في Vercel Logs
       let errorMessage = "Failed to get prediction from AI model.";
-      
       if (error.response) {
         console.error("❌ Azure Rejected the Request:", error.response.data);
         errorMessage = `AI Model Error: ${JSON.stringify(error.response.data)}`;
       } else if (error.code === 'ECONNABORTED') {
-        console.error("❌ Azure Timeout");
         errorMessage = "AI Model took too long to respond (Timeout).";
-      } else {
-        console.error("❌ Unknown Error:", error.message);
       }
-
       throw new AppError(errorMessage, 500); 
     }
   }
