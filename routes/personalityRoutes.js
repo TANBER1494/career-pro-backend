@@ -17,5 +17,6 @@ router.get('/questions', personalityController.getQuestions);
 
 // مسار إرسال الإجابات واستلام النتيجة
 router.post('/submit', personalityController.submitTest);
+router.get('/result', personalityController.getTestResult);
 
 module.exports = router;

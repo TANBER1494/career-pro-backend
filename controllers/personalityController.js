@@ -76,3 +76,34 @@ exports.submitTest = catchAsync(async (req, res, next) => {
     },
   });
 });
+
+// ============================================================
+// 3. Get Existing Test Result
+// ============================================================
+exports.getTestResult = catchAsync(async (req, res, next) => {
+  const seeker = await JobSeeker.findOne({ authId: req.user.id });
+  
+  if (!seeker) {
+    return next(new AppError('Job seeker profile not found.', 404));
+  }
+
+  // لو لسه ممتحنش، نرجع null عشان الفرونت إند يعرف ويظهرله زرار Start Test
+  if (!seeker.mbtiType) {
+    return res.status(200).json({
+      status: 'success',
+      data: null
+    });
+  }
+
+  // لو امتحن، نجهزله النتيجة من القاموس
+  const mbtiDetails = dictionary[seeker.mbtiType];
+  
+  res.status(200).json({
+    status: 'success',
+    data: {
+      personalityType: `${seeker.mbtiType}: ${mbtiDetails.title}`,
+      summary: mbtiDetails.description,
+      suggestedCareers: mbtiDetails.suggestedCareers,
+    },
+  });
+});
