@@ -30,7 +30,9 @@ exports.submitTest = catchAsync(async (req, res, next) => {
 
   // 1. التحقق من صحة المدخلات (Validation)
   if (!answers || !Array.isArray(answers) || answers.length !== 30) {
-    return next(new AppError('Please provide exactly 30 answers in an array format.', 400));
+    return next(
+      new AppError('Please provide exactly 30 answers in an array format.', 400)
+    );
   }
 
   // 2. جلب بروفايل المستخدم (JobSeeker) بناءً على الـ Token
@@ -46,18 +48,19 @@ exports.submitTest = catchAsync(async (req, res, next) => {
 
   // 4. ترجمة الرقم إلى MBTI واستخراج التفاصيل
   const mbtiType = mbtiClasses[predictedIndex]; // مثلاً: "ISFP"
-  const mbtiDetails = dictionary[mbtiType];     // بيانات الشخصية من القاموس
+  const mbtiDetails = dictionary[mbtiType]; // بيانات الشخصية من القاموس
 
   if (!mbtiDetails) {
     return next(new AppError('Error mapping personality type from AI.', 500));
   }
+  await PersonalityTest.deleteMany({ seekerId: seeker._id }); // حذف أي اختبار سابق قبل حفظ الجديد
 
   // 5. حفظ نسخة أرشيفية في جدول الاختبارات (History)
   await PersonalityTest.create({
     seekerId: seeker._id,
     personalityTypeCode: mbtiType,
     testStatus: 'completed',
-    userAnswers: { answersArray: answers }, // حفظ المصفوفة 
+    userAnswers: { answersArray: answers }, // حفظ المصفوفة
     aiRawAnalysis: aiResult,
     completionTime: Date.now(),
   });
@@ -82,7 +85,7 @@ exports.submitTest = catchAsync(async (req, res, next) => {
 // ============================================================
 exports.getTestResult = catchAsync(async (req, res, next) => {
   const seeker = await JobSeeker.findOne({ authId: req.user.id });
-  
+
   if (!seeker) {
     return next(new AppError('Job seeker profile not found.', 404));
   }
@@ -91,13 +94,13 @@ exports.getTestResult = catchAsync(async (req, res, next) => {
   if (!seeker.mbtiType) {
     return res.status(200).json({
       status: 'success',
-      data: null
+      data: null,
     });
   }
 
   // لو امتحن، نجهزله النتيجة من القاموس
   const mbtiDetails = dictionary[seeker.mbtiType];
-  
+
   res.status(200).json({
     status: 'success',
     data: {
