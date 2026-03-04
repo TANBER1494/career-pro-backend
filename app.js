@@ -23,7 +23,10 @@ const applicationRouter = require('./routes/applicationRoutes');
 const personalityRouter = require('./routes/personalityRoutes');
 
 const app = express();
-
+// ============================================================
+// 💡 Vercel Proxy Fix: ضروري جداً لعمل الـ Rate Limiter على Vercel
+// ============================================================
+app.set('trust proxy', 1);
 // ================= CORE MIDDLEWARE STACK =================
 
 // 1. Set Security HTTP Headers
@@ -68,6 +71,7 @@ const limiter = rateLimit({
   max: 1000,
   windowMs: 60 * 60 * 1000,
   message: 'Too many requests from this IP, please try again in an hour!',
+  validate: { xForwardedForHeader: false, default: true }
 });
 app.use('/api', limiter);
 
