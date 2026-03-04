@@ -71,7 +71,12 @@ const limiter = rateLimit({
   max: 1000,
   windowMs: 60 * 60 * 1000,
   message: 'Too many requests from this IP, please try again in an hour!',
-  validate: { xForwardedForHeader: false, default: true }
+  // 💡 إخراس تام لكل تحذيرات Vercel Headers عشان السيرفر ميضربش 500
+  validate: {
+    xForwardedForHeader: false,
+    trustProxy: false,
+    default: true
+  }
 });
 app.use('/api', limiter);
 
