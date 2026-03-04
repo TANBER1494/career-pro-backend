@@ -1,13 +1,16 @@
 const express = require('express');
 const personalityController = require('../controllers/personalityController');
-const authController = require('../controllers/authController'); // أو authMiddleware حسب ما بتسميه
+
+// 💡 التعديل هنا: استدعاء ملف الـ Middleware الصحيح
+// (تأكد إن مسار مجلد middlewares صحيح بناءً على هيكلة مشروعك)
+const authMiddleware = require('../middlewares/authMiddleware'); 
 
 const router = express.Router();
 
 // حماية جميع المسارات القادمة (يجب أن يكون مسجل دخول)
 // والتأكد أنه Job Seeker فقط (الشركات لا تمتحن!)
-router.use(authController.protect); 
-router.use(authController.restrictTo('job_seeker'));
+router.use(authMiddleware.protect); 
+router.use(authMiddleware.restrictTo('job_seeker'));
 
 // مسار جلب الأسئلة
 router.get('/questions', personalityController.getQuestions);
