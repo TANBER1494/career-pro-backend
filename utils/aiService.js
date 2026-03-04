@@ -67,34 +67,39 @@ class AiService {
   // ============================================================
   // 💡 Personality Test AI Integration (With Mock Mode)
   // ============================================================
+// ============================================================
+  // 🚀 Personality Test AI Integration (REAL AZURE MODE)
+  // ============================================================
   async analyzePersonality(answers) {
-    // 1. Reshape from Vector (1D) to Matrix (2D)
-    // الإجابات جاية كده: [1, 5, 3, ...]
-    // الموديل عايزها كده: [[1, 5, 3, ...]]
-    const reshapedAnswers = [answers];
+    try {
+      console.log("🚀 [REAL MODE] Sending Vector to Azure AI...");
+      console.log("Vector Data:", answers);
 
-    // --------------------------------------------------------
-    // 🟢 MOCK MODE: وضع المحاكاة (يُستخدم حالياً للتطوير)
-    // --------------------------------------------------------
-    console.log('🤖 [MOCK] AI Service received Matrix:', reshapedAnswers);
+      // 1. إرسال الريكويست الفعلي لموديل الـ AI (بدون Reshape)
+      // نرسل الـ answers مباشرة في مفتاح features (أو حسب ما تيم AI برمج الـ Flask)
+      const response = await axios.post(
+        "https://careerpro-api-accub9c9gncuewd7.swedencentral-01.azurewebsites.net/predict",
+        {
+          features: answers 
+        }
+      );
 
-    // محاكاة تأخير الشبكة (1 ثانية) عشان الفرونت إند يختبر الـ Loader
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+      console.log("✅ [AZURE RESPONSE]:", response.data);
 
-    // توليد رقم عشوائي من 0 إلى 15 (يمثل الـ 16 شخصية)
-    const mockPredictionIndex = Math.floor(Math.random() * 16);
-    console.log(`[MOCK] AI Model predicted index: ${mockPredictionIndex}`);
+      // 2. استخراج الرقم المتوقع من رد سيرفر Azure
+      // (غالباً المبرمجين بيسموه prediction أو prediction_index)
+      // لو الكود ضرب هنا، بص على سطر الـ console.log اللي فوق وشوف اسم الـ key إيه بالظبط وعدله
+      const predictedIndex = response.data.prediction || response.data.prediction_index || response.data[0]; 
 
-    return { prediction: mockPredictionIndex };
-
-    // --------------------------------------------------------
-    // 🔴 REAL MODE: وضع الإنتاج (يُفعل عند استلام رابط Azure)
-    // --------------------------------------------------------
-    /*
-    return await this._request("POST", "/predict-mbti", { 
-      features: reshapedAnswers 
-    });
-    */
+      return { prediction: predictedIndex };
+      
+    } catch (error) {
+      console.error("❌ Azure AI Service Error:", error.message);
+      if (error.response) {
+        console.error("Azure Error Details:", error.response.data);
+      }
+      throw new Error("Failed to get prediction from AI model.");
+    }
   }
 }
 
