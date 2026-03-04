@@ -1,12 +1,11 @@
 const catchAsync = require('../utils/catchAsync');
 const AppError = require('../utils/AppError');
-const aiService = require('../utils/aiService'); // تأكد من مسار aiService عندك
+const aiService = require('../utils/aiService'); 
 const JobSeeker = require('../models/JobSeeker');
 const PersonalityTest = require('../models/PersonalityTest');
 
-// استدعاء ملفات الـ AI (قاعدة البيانات الثابتة)
+// استدعاء ملفات الـ AI (لم نعد بحاجة لـ mbtiClasses هنا ولكن سنتركه لو احتجته في مكان آخر)
 const questionsData = require('../utils/aiData/selected_features.json');
-const mbtiClasses = require('../utils/aiData/mbti_classes.json');
 const dictionary = require('../utils/aiData/dictionary.json');
 
 // ============================================================
@@ -35,8 +34,7 @@ exports.submitTest = catchAsync(async (req, res, next) => {
     );
   }
 
-  // 2. جلب بروفايل المستخدم (JobSeeker) بناءً على الـ Token
-  // نفترض هنا أن الـ protect middleware يضع بيانات المستخدم في req.user
+  // 2. جلب بروفايل المستخدم
   const seeker = await JobSeeker.findOne({ authId: req.user.id });
   if (!seeker) {
     return next(new AppError('Job seeker profile not found.', 404));
@@ -44,32 +42,35 @@ exports.submitTest = catchAsync(async (req, res, next) => {
 
   // 3. إرسال الإجابات للوسيط الذكي (AI Service)
   const aiResult = await aiService.analyzePersonality(answers);
-  const predictedIndex = aiResult.prediction; // رقم من 0 لـ 15
+  
+  // 💡 التعديل الجوهري: الـ AI أصبح يرسل النص مباشرة (مثلاً "ENFP")
+  const mbtiType = aiResult.prediction; 
 
-  // 4. ترجمة الرقم إلى MBTI واستخراج التفاصيل
-  const mbtiType = mbtiClasses[predictedIndex]; // مثلاً: "ISFP"
-  const mbtiDetails = dictionary[mbtiType]; // بيانات الشخصية من القاموس
+  // 4. استخراج التفاصيل من القاموس مباشرة بناءً على النص
+  const mbtiDetails = dictionary[mbtiType]; 
 
   if (!mbtiDetails) {
-    return next(new AppError('Error mapping personality type from AI.', 500));
+    return next(new AppError(`Error mapping personality type from AI. Received: ${mbtiType}`, 500));
   }
-  await PersonalityTest.deleteMany({ seekerId: seeker._id }); // حذف أي اختبار سابق قبل حفظ الجديد
 
-  // 5. حفظ نسخة أرشيفية في جدول الاختبارات (History)
+  // 5. حذف أي اختبار سابق قبل حفظ الجديد
+  await PersonalityTest.deleteMany({ seekerId: seeker._id }); 
+
+  // 6. حفظ نسخة أرشيفية في جدول الاختبارات
   await PersonalityTest.create({
     seekerId: seeker._id,
     personalityTypeCode: mbtiType,
     testStatus: 'completed',
-    userAnswers: { answersArray: answers }, // حفظ المصفوفة
+    userAnswers: { answersArray: answers },
     aiRawAnalysis: aiResult,
     completionTime: Date.now(),
   });
 
-  // 6. تحديث النتيجة النهائية في البروفايل لسرعة الاسترجاع (Denormalization)
+  // 7. تحديث النتيجة النهائية في البروفايل لسرعة الاسترجاع
   seeker.mbtiType = mbtiType;
   await seeker.save();
 
-  // 7. إرسال الرد النهائي للفرونت إند (مُنسق جاهز للواجهة)
+  // 8. إرسال الرد النهائي للفرونت إند (مُنسق جاهز للواجهة)
   res.status(200).json({
     status: 'success',
     data: {
