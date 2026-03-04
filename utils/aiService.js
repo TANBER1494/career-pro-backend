@@ -1,23 +1,18 @@
-const axios = require('axios');
-const AppError = require('./AppError');
+const axios = require("axios");
+const AppError = require("./AppError");
 
 class AiService {
   constructor() {
     this.client = axios.create({
-      baseURL: process.env.AI_SERVICE_URL || 'http://127.0.0.1:5000',
-      timeout: 10000, // Wait for 10 seconds max
+      // 💡 التعديل هنا: وضع رابط Azure كرابط أساسي للذكاء الاصطناعي
+      baseURL: process.env.AI_SERVICE_URL || "https://careerpro-api-accub9c9gncuewd7.swedencentral-01.azurewebsites.net",
+      timeout: 15000, // زودنا الوقت لـ 15 ثانية تحسباً لبطء سيرفرات الـ AI المجانية
       headers: {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
       },
     });
   }
 
-  /**
-   * Generic method to send requests to AI Service
-   * @param {string} method - 'POST', 'GET'
-   * @param {string} endpoint - e.g., '/analyze-cv'
-   * @param {object} data - The payload
-   */
   async _request(method, endpoint, data = {}) {
     try {
       const response = await this.client({
@@ -27,81 +22,46 @@ class AiService {
       });
       return response.data;
     } catch (error) {
-      // Log error for debugging
       console.error(`AI Service Error [${endpoint}]:`, error.message);
 
-      // If AI server is down
-      if (error.code === 'ECONNREFUSED') {
-        throw new AppError(
-          'AI Service is currently unavailable. Please try again later.',
-          503
-        );
+      if (error.code === "ECONNREFUSED") {
+        throw new AppError("AI Service is currently unavailable. Please try again later.", 503);
       }
 
-      // If AI returned an error response (e.g., 400, 500)
       if (error.response) {
-        throw new AppError(
-          error.response.data.message || 'Error processing request by AI.',
-          error.response.status
-        );
+        console.error("AI Server Details:", error.response.data); // مفيد جداً للـ Debugging
+        throw new AppError(error.response.data.message || "Error processing request by AI.", error.response.status);
       }
 
-      throw new AppError('Internal Server Error during AI communication.', 500);
+      throw new AppError("Internal Server Error during AI communication.", 500);
     }
   }
 
-  // --- Public Methods for Controllers ---
-
-  async analyzeCV(filePath) {
-    // Send file path to AI to read and analyze
-    return await this._request('POST', '/analyze-cv', { filePath });
-  }
-
-  async matchJobs(seekerProfile, jobList) {
-    return await this._request('POST', '/match-jobs', {
-      seekerProfile,
-      jobList,
-    });
-  }
-
   // ============================================================
-  // 💡 Personality Test AI Integration (With Mock Mode)
-  // ============================================================
-// ============================================================
   // 🚀 Personality Test AI Integration (REAL AZURE MODE)
   // ============================================================
   async analyzePersonality(answers) {
     try {
-      console.log("🚀 [REAL MODE] Sending Vector to Azure AI...");
-      console.log("Vector Data:", answers);
+      console.log("🚀 Sending Vector to Azure AI:", answers);
 
-      // 1. إرسال الريكويست الفعلي لموديل الـ AI (بدون Reshape)
-      // نرسل الـ answers مباشرة في مفتاح features (أو حسب ما تيم AI برمج الـ Flask)
-      const response = await axios.post(
-        "https://careerpro-api-accub9c9gncuewd7.swedencentral-01.azurewebsites.net/predict",
-        {
-          features: answers 
-        }
-      );
+      // استخدام this._request بدلاً من axios.post المباشر عشان نستفيد من إعدادات الـ client
+      const responseData = await this._request("POST", "/predict", {
+        features: answers,
+      });
 
-      console.log("✅ [AZURE RESPONSE]:", response.data);
+      console.log("✅ AZURE RESPONSE:", responseData);
 
-      // 2. استخراج الرقم المتوقع من رد سيرفر Azure
-      // (غالباً المبرمجين بيسموه prediction أو prediction_index)
-      // لو الكود ضرب هنا، بص على سطر الـ console.log اللي فوق وشوف اسم الـ key إيه بالظبط وعدله
-      const predictedIndex = response.data.prediction || response.data.prediction_index || response.data[0]; 
+      // استخراج النتيجة (سواء كانت prediction أو index 0)
+      const predictedIndex = responseData.prediction || responseData.prediction_index || responseData[0];
 
       return { prediction: predictedIndex };
-      
     } catch (error) {
-      console.error("❌ Azure AI Service Error:", error.message);
-      if (error.response) {
-        console.error("Azure Error Details:", error.response.data);
-      }
-      throw new Error("Failed to get prediction from AI model.");
+      console.error("❌ Failed to analyze personality:", error);
+      throw error; // رمي الخطأ للـ Controller عشان يرجعه للفرونت إند
     }
   }
+
+  // سيتم إضافة الدوال الأخرى هنا لاحقاً (analyzeCV, matchJobs)
 }
 
-// Export a single instance (Singleton)
 module.exports = new AiService();
