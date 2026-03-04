@@ -67,30 +67,43 @@ class AiService {
   // ============================================================
   // 💡 Personality Test AI Integration (With Mock Mode)
   // ============================================================
+  // ============================================================
+  // 🚀 Personality Test AI Integration (REAL AZURE MODE)
+  // ============================================================
   async analyzePersonality(answers) {
     try {
-      // 1. إرسال الداتا بنفس المفتاح (answers) اللي تيم الـ AI طلبه
+      // 💡 السحر هنا: تحويل القيم من (1-7) إلى (-3 إلى +3) لتطابق الموديل
+      const mappedAnswers = answers.map(val => val - 4);
+      
+      console.log("🚀 [REAL MODE] Sending to Azure:", { answers: mappedAnswers });
+
+      // 1. إرسال الداتا للموديل
       const response = await axios.post(
         "https://careerpro-api-accub9c9gncuewd7.swedencentral-01.azurewebsites.net/predict",
         {
-          answers: answers 
+          answers: mappedAnswers 
         }
       );
 
-      // 2. استخراج النتيجة من رد الموديل
-      // (حسب كود البايثون اللي سندس بعتته، الرد هيكون JSON جواه النتيجة)
+      console.log("✅ [AZURE RESPONSE]:", response.data);
+
+      // 2. استخراج النتيجة
       const predictedIndex = response.data.prediction || response.data.prediction_index || response.data[0] || response.data; 
 
       return { prediction: predictedIndex };
       
     } catch (error) {
-      // التقاط الأخطاء بذكاء وإرسالها للكونسول وللفرونت إند
+      // 🚨 تسجيل الخطأ بالتفصيل في Vercel Logs
       let errorMessage = "Failed to get prediction from AI model.";
       
       if (error.response) {
+        console.error("❌ Azure Rejected the Request:", error.response.data);
         errorMessage = `AI Model Error: ${JSON.stringify(error.response.data)}`;
       } else if (error.code === 'ECONNABORTED') {
+        console.error("❌ Azure Timeout");
         errorMessage = "AI Model took too long to respond (Timeout).";
+      } else {
+        console.error("❌ Unknown Error:", error.message);
       }
 
       throw new AppError(errorMessage, 500); 
