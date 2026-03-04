@@ -26,8 +26,7 @@ const app = express();
 // ============================================================
 // 💡 Vercel Proxy Fix: ضروري جداً لعمل الـ Rate Limiter على Vercel
 // ============================================================
-app.set('trust proxy', 1);
-// ================= CORE MIDDLEWARE STACK =================
+app.set('trust proxy', true);// ================= CORE MIDDLEWARE STACK =================
 
 // 1. Set Security HTTP Headers
 app.use(helmet());
@@ -72,11 +71,7 @@ const limiter = rateLimit({
   windowMs: 60 * 60 * 1000,
   message: 'Too many requests from this IP, please try again in an hour!',
   // 💡 إخراس تام لكل تحذيرات Vercel Headers عشان السيرفر ميضربش 500
-  validate: {
-    xForwardedForHeader: false,
-    trustProxy: false,
-    default: true
-  }
+ validate: false
 });
 app.use('/api', limiter);
 
