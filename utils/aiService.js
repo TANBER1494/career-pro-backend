@@ -67,43 +67,32 @@ class AiService {
   // ============================================================
   // 💡 Personality Test AI Integration (With Mock Mode)
   // ============================================================
-// ============================================================
-  // 🚀 Personality Test AI Integration (REAL AZURE MODE)
-  // ============================================================
-// ============================================================
-  // 🚀 Personality Test AI Integration (REAL AZURE MODE)
-  // ============================================================
   async analyzePersonality(answers) {
     try {
-      // 1. إرسال المصفوفة (Vector) مباشرة كما يتوقعها مبرمجو Flask غالباً
-      // لو ضربت، جرب ترجعها { data: [answers] } أو { features: answers }
+      // 1. إرسال الداتا بنفس المفتاح (answers) اللي تيم الـ AI طلبه
       const response = await axios.post(
         "https://careerpro-api-accub9c9gncuewd7.swedencentral-01.azurewebsites.net/predict",
-        answers // إرسال الـ Array مباشرة بدون Object
+        {
+          answers: answers 
+        }
       );
 
-      // 2. استخراج الرقم المتوقع 
-      const predictedIndex = response.data.prediction || response.data.prediction_index || response.data[0]; 
-
-      if (predictedIndex === undefined || predictedIndex === null) {
-         throw new Error("Invalid response format from Azure AI.");
-      }
+      // 2. استخراج النتيجة من رد الموديل
+      // (حسب كود البايثون اللي سندس بعتته، الرد هيكون JSON جواه النتيجة)
+      const predictedIndex = response.data.prediction || response.data.prediction_index || response.data[0] || response.data; 
 
       return { prediction: predictedIndex };
       
     } catch (error) {
-      // 💡 التقاط الخطأ بذكاء وإرساله للـ Global Error Handler
+      // التقاط الأخطاء بذكاء وإرسالها للكونسول وللفرونت إند
       let errorMessage = "Failed to get prediction from AI model.";
       
       if (error.response) {
-        // الموديل رفض الطلب (مثلاً 400 Bad Request)
         errorMessage = `AI Model Error: ${JSON.stringify(error.response.data)}`;
       } else if (error.code === 'ECONNABORTED') {
-        // مشكلة Timeout
         errorMessage = "AI Model took too long to respond (Timeout).";
       }
 
-      // استخدام AppError عشان Vercel يبعت الرسالة دي للفرونت إند بدل ما يكتب 500 غامضة
       throw new AppError(errorMessage, 500); 
     }
   }
