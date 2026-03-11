@@ -1,7 +1,7 @@
 const express = require('express');
-const authController = require('../controllers/authController');
-const cvAnalyzerController = require('../controllers/cvAnalyzerController'); // عدل المسار حسب اسم ملفك
-const upload = require('../utils/fileUpload'); // ملف multer اللي رفعتهولي
+const cvAnalyzerController = require('../controllers/cvAnalyzerController'); // تأكد إن الاسم مطابق لملفك
+const upload = require('../utils/fileUpload'); 
+const authMiddleware = require('../middlewares/authMiddleware'); // 💡 التعديل هنا: استدعاء الميدل وير الصحيح
 
 const router = express.Router();
 
@@ -9,15 +9,15 @@ const router = express.Router();
 // 🚀 AI Routes: CV Analyzer & ATS Checker
 // ============================================================
 
-// نطبق حماية تسجيل الدخول على كل مسارات الـ AI الجاية
-router.use(authController.protect);
+// 1. حماية جميع مسارات هذا الملف (يجب أن يكون مسجل دخول)
+router.use(authMiddleware.protect);
 
-// مسار تحليل السيرة الذاتية
+// 2. مسار تحليل السيرة الذاتية
 router.post(
   '/analyze-cv',
-  authController.restrictTo('job_seeker'), // (اختياري) تأكيد إن طالب العمل بس هو اللي يحلل الـ CV
-  upload.single('cvFile'), // 'cvFile' ده المفتاح اللي الـ multer بيستناه بناءً على كودك
-  cvAnalyzerController.analyzeCV
+  authMiddleware.restrictTo('job_seeker'), // السماح لطلبة العمل فقط
+  upload.single('cvFile'), // أداة الرفع السحابية
+  cvAnalyzerController.analyzeCV // الكنترولر الذي يكلم الـ AI
 );
 
 module.exports = router;
