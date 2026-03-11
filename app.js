@@ -21,7 +21,7 @@ const companyRouter = require('./routes/companyRoutes');
 const jobRouter = require('./routes/jobRoutes');
 const applicationRouter = require('./routes/applicationRoutes');
 const personalityRouter = require('./routes/personalityRoutes');
-
+const cvAnalyzerRoutes = require('./routes/cvAnalyzerRoutes');
 const app = express();
 // ============================================================
 // 💡 Vercel Proxy Fix: 
@@ -129,7 +129,7 @@ app.use('/api/v1/applications', applicationRouter);
 
 
 app.use('/api/v1/personality', personalityRouter);
-
+app.use('/api/v1/ai', cvAnalyzerRoutes);
 // ================= ERROR HANDLING =================
 app.all(/(.*)/, (req, res, next) => {
   next(new AppError(`Can't find ${req.originalUrl} on this server!`, 404));

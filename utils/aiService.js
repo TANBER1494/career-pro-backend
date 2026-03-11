@@ -50,11 +50,36 @@ class AiService {
     }
   }
 
-  // --- Public Methods for Controllers ---
 
-  async analyzeCV(filePath) {
-    // Send file path to AI to read and analyze
-    return await this._request('POST', '/analyze-cv', { filePath });
+ // ============================================================
+  // CV Analyzer & ATS Checker (REAL AZURE MODE)
+  // ============================================================
+  async analyzeCV(cvUrl, jobDescription) {
+    try {
+      console.log("🚀 [REAL MODE] Sending CV to Azure AI...");
+      
+      // 1. تجهيز الـ Payload بنفس المفاتيح (Keys) المتفق عليها في العقد تماماً
+      const payload = {
+        cv_url: cvUrl,
+        job_description: jobDescription
+      };
+
+      // 2. إرسال الطلب لسيرفر الـ AI
+      // نفترض هنا أن تيم الـ AI سيسمي المسار '/analyze-cv'
+      // (إذا أعطوك مساراً آخر مثل '/evaluate' يمكنك تغييره هنا ببساطة)
+      const response = await this._request('POST', '/analyze-cv', payload);
+
+      console.log("✅ [AZURE RESPONSE - CV ANALYZER]:", response);
+
+      // 3. إرجاع النتيجة كما هي للكنترولر (والتي ستحتوي على ats_score والتوصيات)
+      return response;
+      
+    } catch (error) {
+      console.error("❌ Azure AI CV Analysis Error:", error.message);
+      // ملاحظة: دالة _request الأساسية لديك تقوم بالفعل بالتقاط الأخطاء 
+      // وتحويلها إلى AppError برموز الحالة الصحيحة (400, 500)، لذا نعيد رمي الخطأ للكنترولر
+      throw error; 
+    }
   }
 
   async matchJobs(seekerProfile, jobList) {
