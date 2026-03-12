@@ -10,20 +10,20 @@
         ],
         "suggestedCareers": [
             {
-                "title": "Software Architect",
-                "reason": "Matches your analytical thinking and love for complex systems."
+                "title": "Cloud Architect",
+                "reason": "Matches your analytical thinking and love for designing complex, scalable systems."
             },
             {
                 "title": "Data Scientist",
-                "reason": "Requires strong logical reasoning and pattern recognition."
+                "reason": "Requires strong logical reasoning and pattern recognition in large datasets."
             },
             {
-                "title": "Strategic Planner",
-                "reason": "Fits your ability to see the big picture and plan ahead."
+                "title": "Machine Learning Engineer",
+                "reason": "Fits your ability to see the big picture and build predictive AI models."
             },
             {
-                "title": "Investment Banker",
-                "reason": "Demands high-level analysis and long-term strategy."
+                "title": "Software Architect",
+                "reason": "Demands high-level system analysis and long-term technical strategy."
             }
         ]
     },
@@ -38,20 +38,20 @@
         ],
         "suggestedCareers": [
             {
-                "title": "Computer Programmer",
-                "reason": "Perfect environment for deep logic and problem-solving."
+                "title": "Backend Developer (Node.js/Python)",
+                "reason": "Perfect environment for deep logic, abstract thinking, and API problem-solving."
             },
             {
-                "title": "University Professor",
-                "reason": "Allows deep research and theoretical exploration."
+                "title": "AI Research Scientist",
+                "reason": "Allows deep research, theoretical exploration, and algorithmic innovation."
             },
             {
-                "title": "Forensic Scientist",
-                "reason": "Utilizes your attention to detail and objective analysis."
+                "title": "Blockchain Developer",
+                "reason": "Utilizes your attention to detail and love for decentralized, complex logic."
             },
             {
-                "title": "Mathematician",
-                "reason": "Pure logic and abstract theories appeal to your mind."
+                "title": "Big Data Engineer",
+                "reason": "Pure logic and data structuring appeal perfectly to your analytical mind."
             }
         ]
     },
@@ -66,20 +66,20 @@
         ],
         "suggestedCareers": [
             {
-                "title": "Chief Executive Officer (CEO)",
-                "reason": "Natural leadership abilities and strategic vision."
+                "title": "Chief Technology Officer (CTO)",
+                "reason": "Natural leadership abilities to drive the entire tech vision of a company."
             },
             {
-                "title": "Management Consultant",
-                "reason": "Ability to analyze and fix organizational inefficiencies."
+                "title": "VP of Engineering",
+                "reason": "Ability to analyze inefficiencies, scale teams, and manage tech operations."
             },
             {
-                "title": "Project Manager",
-                "reason": "Strong organizational and directive skills."
+                "title": "Technical Lead",
+                "reason": "Strong organizational skills to direct developers and make architectural decisions."
             },
             {
-                "title": "Judge",
-                "reason": "Requires decisive decision-making and authority."
+                "title": "Cloud FinOps Engineer",
+                "reason": "Requires decisive decision-making to optimize cloud infrastructure and costs."
             }
         ]
     },
@@ -94,20 +94,20 @@
         ],
         "suggestedCareers": [
             {
-                "title": "Entrepreneur",
-                "reason": "Thrives on risk, innovation, and new ideas."
-            },
-            {
-                "title": "Marketing Director",
-                "reason": "Uses creativity to influence and persuade others."
+                "title": "Growth Hacker",
+                "reason": "Thrives on risk, A/B testing innovation, and data-driven experiments."
             },
             {
                 "title": "Product Manager",
-                "reason": "Combines innovation with strategic product vision."
+                "reason": "Combines technical innovation with strategic product vision and market debate."
             },
             {
-                "title": "Stock Trader",
-                "reason": "Requires quick thinking and adaptability."
+                "title": "Full Stack Developer",
+                "reason": "Allows you to constantly adapt and jump between different technologies and challenges."
+            },
+            {
+                "title": "Developer Advocate",
+                "reason": "Uses deep tech knowledge to influence and persuade the developer community."
             }
         ]
     },
@@ -122,20 +122,20 @@
         ],
         "suggestedCareers": [
             {
-                "title": "Counselor / Psychotherapist",
-                "reason": "Uses deep empathy to help others grow and heal."
+                "title": "UX Researcher",
+                "reason": "Uses deep empathy to understand user pain points and improve product experiences."
             },
             {
-                "title": "HR Manager",
-                "reason": "Understanding human potential fits your nature perfectly."
+                "title": "Technical Writer",
+                "reason": "Allows expression of complex technical ideals into clear, helpful documentation."
             },
             {
-                "title": "Writer / Author",
-                "reason": "Allows expression of deep thoughts and complex ideals."
+                "title": "Product Designer",
+                "reason": "Focuses on human-centric design, aligning technology with user needs."
             },
             {
-                "title": "Non-Profit Organizer",
-                "reason": "Driven by a cause and helping humanity."
+                "title": "E-Learning Instructional Designer",
+                "reason": "Driven by a cause to educate others and build meaningful tech curricula."
             }
         ]
     },
@@ -150,20 +150,20 @@
         ],
         "suggestedCareers": [
             {
-                "title": "UX/UI Designer",
-                "reason": "Focuses on user empathy combined with visual creativity."
+                "title": "UI/UX Designer",
+                "reason": "Focuses on user empathy combined with visual creativity and aesthetics."
             },
             {
-                "title": "Physical Therapist",
-                "reason": "Helping individuals heal in a personal way."
+                "title": "Frontend Developer (React/Vue)",
+                "reason": "Bringing creative, user-facing designs to life through code."
             },
             {
-                "title": "Content Creator",
-                "reason": "Expressing authentic values and storytelling."
+                "title": "3D Game Artist",
+                "reason": "Expressing authentic imagination and storytelling in virtual environments."
             },
             {
-                "title": "Editor",
-                "reason": "Working with ideas and language in a peaceful environment."
+                "title": "Content Strategist",
+                "reason": "Working with tech ideas and language in a creative, user-focused way."
             }
         ]
     },
@@ -178,20 +178,20 @@
         ],
         "suggestedCareers": [
             {
-                "title": "Public Relations Manager",
-                "reason": "Exceptional communication and people skills."
+                "title": "Agile Coach",
+                "reason": "Exceptional communication skills to drive agile transformation and team harmony."
             },
             {
-                "title": "Sales Manager",
-                "reason": "Ability to persuade, motivate, and lead teams."
+                "title": "Scrum Master",
+                "reason": "Ability to persuade, motivate, and clear blockers for development teams."
             },
             {
-                "title": "Corporate Trainer",
-                "reason": "Helping others develop their skills and potential."
+                "title": "Technical Product Owner",
+                "reason": "Leading the product vision by aligning business stakeholders with developers."
             },
             {
-                "title": "Art Director",
-                "reason": "Leading creative teams with vision and harmony."
+                "title": "Developer Advocate",
+                "reason": "Inspiring and educating the external developer community."
             }
         ]
     },
@@ -206,20 +206,20 @@
         ],
         "suggestedCareers": [
             {
-                "title": "Journalist",
-                "reason": "Satisfies your curiosity about people and their stories."
+                "title": "Developer Advocate",
+                "reason": "Satisfies your curiosity about tech communities and sharing knowledge."
             },
             {
-                "title": "Event Planner",
-                "reason": "Combines creativity with dynamic social interaction."
+                "title": "Growth Hacker",
+                "reason": "Combines creativity with dynamic data experiments and user acquisition."
             },
             {
-                "title": "Creative Director",
-                "reason": "Leading teams with vision, energy, and open-mindedness."
+                "title": "SEO Specialist",
+                "reason": "Creative problem-solving mixed with marketing and technical web standards."
             },
             {
-                "title": "Travel Writer",
-                "reason": "Exploration and sharing experiences with others."
+                "title": "UX/UI Designer",
+                "reason": "Exploring new design trends and sharing aesthetic experiences with users."
             }
         ]
     },
@@ -234,20 +234,20 @@
         ],
         "suggestedCareers": [
             {
-                "title": "Accountant / CPA",
-                "reason": "Requires precision, order, and adherence to rules."
+                "title": "Database Administrator (DBA)",
+                "reason": "Requires precision, order, and strict adherence to data integrity."
             },
             {
-                "title": "Supply Chain Manager",
-                "reason": "Organizing complex logistics efficiently and reliably."
+                "title": "DevOps Engineer",
+                "reason": "Organizing complex CI/CD pipelines efficiently and reliably."
             },
             {
-                "title": "Database Administrator",
-                "reason": "Maintaining structure, data integrity, and order."
+                "title": "QA Automation Engineer",
+                "reason": "Maintaining structure and ensuring zero-defect software releases."
             },
             {
-                "title": "Military Officer",
-                "reason": "Thriving in hierarchy, structure, and duty."
+                "title": "Site Reliability Engineer (SRE)",
+                "reason": "Thriving in structured monitoring, automation, and system stability."
             }
         ]
     },
@@ -262,20 +262,20 @@
         ],
         "suggestedCareers": [
             {
-                "title": "Nurse",
-                "reason": "Practical care for others in a structured, supportive way."
+                "title": "IT Support Specialist",
+                "reason": "Patiently helping users fix specific technical problems."
             },
             {
-                "title": "Office Manager",
-                "reason": "Keeping the workplace running smoothly and harmoniously."
+                "title": "NOC Tier 1 Analyst",
+                "reason": "Dedicated monitoring and protection of enterprise network infrastructure."
             },
             {
-                "title": "Technical Support Specialist",
-                "reason": "Patiently helping users fix specific problems."
+                "title": "Manual QA Tester",
+                "reason": "Practical care for product quality in a structured, supportive way."
             },
             {
-                "title": "Elementary Teacher",
-                "reason": "Nurturing and educating with patience and care."
+                "title": "Data Entry Specialist",
+                "reason": "Requires high attention to detail and reliable, methodical work."
             }
         ]
     },
@@ -290,20 +290,20 @@
         ],
         "suggestedCareers": [
             {
-                "title": "Operations Manager",
-                "reason": "Ensuring efficiency, organization, and following procedures."
+                "title": "Release Manager",
+                "reason": "Ensuring efficiency, organization, and strict adherence to deployment schedules."
             },
             {
-                "title": "Financial Auditor",
-                "reason": "Detailed checking and strict adherence to standards."
+                "title": "Systems Analyst",
+                "reason": "Detailed checking of IT requirements and translating them to practical specs."
             },
             {
-                "title": "Judge",
-                "reason": "Upholding the law, facts, and established rules."
+                "title": "Network Architect",
+                "reason": "Managing complex hardware systems, security protocols, and procedures."
             },
             {
-                "title": "Bank Manager",
-                "reason": "Managing systems, money, and people effectively."
+                "title": "Data Governance Specialist",
+                "reason": "Establishing and enforcing data quality and compliance policies."
             }
         ]
     },
@@ -318,20 +318,20 @@
         ],
         "suggestedCareers": [
             {
-                "title": "Real Estate Agent",
-                "reason": "Helping people find homes through strong social connection."
+                "title": "Technical Recruiter",
+                "reason": "Helping companies find top talent through strong social connections."
             },
             {
-                "title": "Medical Assistant",
-                "reason": "Direct patient care within a structured environment."
+                "title": "IT Support Specialist",
+                "reason": "Direct technical assistance within a structured, helpful environment."
             },
             {
-                "title": "Account Manager",
-                "reason": "Building and maintaining strong client relationships."
+                "title": "Scrum Master",
+                "reason": "Building and maintaining strong team relationships and agile ceremonies."
             },
             {
-                "title": "Event Coordinator",
-                "reason": "Creating organized, happy experiences for others."
+                "title": "E-commerce Manager",
+                "reason": "Creating organized digital store experiences for customers."
             }
         ]
     },
@@ -346,20 +346,20 @@
         ],
         "suggestedCareers": [
             {
-                "title": "Civil Engineer",
-                "reason": "Solving tangible problems with mechanics and logic."
+                "title": "Penetration Tester",
+                "reason": "Solving tangible security puzzles with ethical hacking and logic."
             },
             {
-                "title": "Pilot",
-                "reason": "Mastering complex tools and reacting to physical environments."
+                "title": "Hardware Engineer",
+                "reason": "Mastering complex tools, PCBs, and embedded systems."
             },
             {
-                "title": "Mechanic",
-                "reason": "Hands-on troubleshooting and fixing of systems."
+                "title": "Cybersecurity Analyst",
+                "reason": "Hands-on troubleshooting and securing of networks and systems."
             },
             {
-                "title": "Forensic Analyst",
-                "reason": "Using logic and observation to solve physical puzzles."
+                "title": "Mobile Developer (iOS/Android)",
+                "reason": "Using logic and practical tools to build interactive device applications."
             }
         ]
     },
@@ -375,19 +375,19 @@
         "suggestedCareers": [
             {
                 "title": "Graphic Designer",
-                "reason": "Expressing aesthetic sense and creativity visually."
+                "reason": "Expressing aesthetic sense and creativity visually for web and marketing."
             },
             {
-                "title": "Chef",
-                "reason": "Creating immediate sensory experiences for others."
+                "title": "3D Animator",
+                "reason": "Creating immediate sensory experiences and character animations."
             },
             {
-                "title": "Veterinarian",
-                "reason": "Caring for animals with a gentle, hands-on approach."
+                "title": "Frontend Web Performance Engineer",
+                "reason": "Blending technical optimization with visual rendering logic."
             },
             {
-                "title": "Landscape Architect",
-                "reason": "Blending nature with design and aesthetics."
+                "title": "AR/VR Developer",
+                "reason": "Exploring new boundaries of mixed reality and design."
             }
         ]
     },
@@ -402,20 +402,20 @@
         ],
         "suggestedCareers": [
             {
-                "title": "Stockbroker",
-                "reason": "High-stakes, fast-paced decision making."
+                "title": "Incident Response Lead",
+                "reason": "High-stakes, fast-paced decision making during active cyber threats."
             },
             {
-                "title": "Sales Representative",
-                "reason": "Direct interaction and results-driven environment."
+                "title": "Cloud Security Engineer",
+                "reason": "Reacting quickly to changing environments and mitigating risks."
             },
             {
-                "title": "Police Officer / Detective",
-                "reason": "Reacting quickly to changing physical situations."
+                "title": "Penetration Tester",
+                "reason": "Direct action, finding vulnerabilities, and thinking like a hacker."
             },
             {
-                "title": "Sports Coach",
-                "reason": "Strategy combined with physical action and motivation."
+                "title": "Game Tester",
+                "reason": "Energetic exploration of game mechanics to find bugs and edge cases."
             }
         ]
     },
@@ -430,20 +430,20 @@
         ],
         "suggestedCareers": [
             {
-                "title": "Tour Guide",
-                "reason": "Constant social interaction and excitement."
+                "title": "Developer Advocate",
+                "reason": "Being the center of attention, speaking at conferences, and entertaining devs."
             },
             {
-                "title": "Actor / Performer",
-                "reason": "Being the center of attention and entertaining others."
+                "title": "UX Researcher",
+                "reason": "Constant social interaction and excitement in user testing."
             },
             {
-                "title": "Customer Success Manager",
-                "reason": "Making people happy and solving problems instantly."
+                "title": "E-commerce Manager",
+                "reason": "Making customers happy and solving digital store problems instantly."
             },
             {
-                "title": "Fashion Stylist",
-                "reason": "Working with aesthetics, people, and trends."
+                "title": "Content Strategist",
+                "reason": "Working with digital aesthetics, social media, and tech trends."
             }
         ]
     }
