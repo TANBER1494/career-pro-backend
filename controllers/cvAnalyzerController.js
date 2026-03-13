@@ -61,3 +61,31 @@ exports.analyzeCV = catchAsync(async (req, res, next) => {
     return next(new AppError(error.message || 'Failed to analyze CV. Please try again later.', 500));
   }
 });
+
+// ============================================================
+// 🚀 2. Get Latest CV Analysis Result Controller
+// ============================================================
+exports.getLatestAnalysis = catchAsync(async (req, res, next) => {
+  // 1. البحث في الداتابيز عن أحدث ريكويست مكتمل لهذا المستخدم
+  const latestAnalysis = await AiAnalysisRequest.findOne({
+    seekerId: req.user.id,
+    requestStatus: 'completed'
+  }).sort('-createdAt'); // الفرز تنازلياً لجلب الأحدث (الأخير)
+
+  // 2. لو مفيش أي ريكويست سابق (اليوزر جديد)
+  if (!latestAnalysis) {
+    return res.status(200).json({
+      status: 'success',
+      data: null // نرسل null عشان الفرونت إند يفهم ويفتح شاشة الرفع
+    });
+  }
+
+  // 3. لو لقينا نتيجة، نرجعها بنفس الهيكل اللي الفرونت إند متعود عليه
+  res.status(200).json({
+    status: 'success',
+    data: {
+      analysisId: latestAnalysis._id,
+      result: latestAnalysis.responseData // الـ JSON الخاص بـ Azure محفوظ هنا
+    }
+  });
+});

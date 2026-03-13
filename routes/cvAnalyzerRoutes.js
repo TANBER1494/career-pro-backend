@@ -12,6 +12,14 @@ const router = express.Router();
 // 1. حماية جميع مسارات هذا الملف (يجب أن يكون مسجل دخول)
 router.use(authMiddleware.protect);
 
+
+// 1. مسار جلب آخر نتيجة تحليل (GET) - 🚨 أضفناه هنا 🚨
+router.get(
+  '/analyze-cv/latest',
+  authMiddleware.restrictTo('job_seeker'),
+  cvAnalyzerController.getLatestAnalysis
+);
+
 // 2. مسار تحليل السيرة الذاتية
 router.post(
   '/analyze-cv',
