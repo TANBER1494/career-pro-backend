@@ -2,14 +2,14 @@ const axios = require('axios');
 const AppError = require('./AppError');
 
 class AiService {
-  constructor() {
+ constructor() {
     this.client = axios.create({
       baseURL: process.env.AI_SERVICE_URL || 'http://127.0.0.1:5000',
-      // 🚨 التعديل الأهم: رفعنا الـ Timeout لـ 35 ثانية بناءً على تعليمات تيم الـ AI
-      // لإعطاء موديل الـ LLM الوقت الكافي لقراءة الـ CV وتحليله
       timeout: 35000, 
       headers: {
         'Content-Type': 'application/json',
+        // 🚨 التعديل هنا: تمرير المفتاح السري في كل ريكويست
+        'x-api-key': process.env.AI_SERVICE_API_KEY 
       },
     });
   }
