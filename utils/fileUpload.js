@@ -2,6 +2,7 @@ const multer = require('multer');
 const cloudinary = require('cloudinary').v2;
 const { CloudinaryStorage } = require('multer-storage-cloudinary');
 const AppError = require('./AppError'); // Adjust path if needed
+const path = require('path');
 
 // ================= CLOUDINARY CONFIGURATION =================
 // Ensure your .env variables are loaded before this file runs
@@ -43,38 +44,41 @@ const storage = new CloudinaryStorage({
   },
 });
 
-// ================= 2. FILE FILTER (Security Check) =================
-// Kept exactly as your original solid logic
+// ================= 2. FILE FILTER (Strict Security Check) =================
 const fileFilter = (req, file, cb) => {
-  if (
-    file.fieldname === 'cvFile' ||
-    file.fieldname === 'verificationDocument'
-  ) {
-    if (
+  // 1. استخراج امتداد الملف وتحويله لحروف صغيرة (مثال: .PDF -> .pdf)
+  const ext = path.extname(file.originalname).toLowerCase();
+
+  // 2. القوائم البيضاء للامتدادات المسموحة (Whitelists)
+  const allowedDocExts = ['.pdf', '.doc', '.docx'];
+  const allowedImageExts = ['.jpg', '.jpeg', '.png', '.gif', '.webp'];
+
+  if (file.fieldname === 'cvFile' || file.fieldname === 'verificationDocument') {
+    // فحص مزدوج: الهيدر + الامتداد الحقيقي
+    const isMimeValid = 
       file.mimetype === 'application/pdf' ||
       file.mimetype === 'application/msword' ||
-      file.mimetype ===
-        'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
-    ) {
+      file.mimetype === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+    
+    const isExtValid = allowedDocExts.includes(ext);
+
+    if (isMimeValid && isExtValid) {
       cb(null, true);
     } else {
-      cb(
-        new AppError(
-          'Not a valid document! Please upload PDF or DOC/DOCX.',
-          400
-        ),
-        false
-      );
+      cb(new AppError('Security Alert: Invalid document! Please upload only true PDF or DOC/DOCX files.', 400), false);
     }
-  } else if (
-    file.fieldname === 'logoFile' ||
-    file.fieldname === 'profileImage'
-  ) {
-    if (file.mimetype.startsWith('image')) {
+
+  } else if (file.fieldname === 'logoFile' || file.fieldname === 'profileImage') {
+    // فحص مزدوج: الهيدر + الامتداد الحقيقي
+    const isMimeValid = file.mimetype.startsWith('image/');
+    const isExtValid = allowedImageExts.includes(ext);
+
+    if (isMimeValid && isExtValid) {
       cb(null, true);
     } else {
-      cb(new AppError('Not an image! Please upload only images.', 400), false);
+      cb(new AppError('Security Alert: Invalid image format! Please upload only valid JPG, PNG, GIF, or WEBP files.', 400), false);
     }
+
   } else {
     cb(new AppError('Unknown file field!', 400), false);
   }
