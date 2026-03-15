@@ -334,7 +334,14 @@ exports.suspendUser = catchAsync(async (req, res, next) => {
   res.status(200).json({
     status: 'success',
     message: `User suspended and notification email sent to ${user.email}`,
-    data: { user },
+    data: {
+      user: {
+        id: user._id,
+        email: user.email,
+        status: user.status,
+        suspensionExpires: user.suspensionExpires,
+      },
+    },
   });
 });
 
