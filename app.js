@@ -30,7 +30,21 @@ const app = express();
 app.set('trust proxy', 1);
 
 // 1. Set Security HTTP Headers
-app.use(helmet());
+app.use(
+  helmet({
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        scriptSrc: ["'self'", "'unsafe-inline'", "https://cdn.tailwindcss.com", "https://unpkg.com", "https://cdn.jsdelivr.net"],
+        styleSrc: ["'self'", "'unsafe-inline'", "https://cdnjs.cloudflare.com", "https://fonts.googleapis.com", "https://cdn.jsdelivr.net"],
+        imgSrc: ["'self'", "data:", "https://res.cloudinary.com", "https://placehold.co"],
+        connectSrc: ["'self'", "https://api.careerpro.me", "http://localhost:3000", "https://career-pro-backend.vercel.app"], 
+        fontSrc: ["'self'", "https://fonts.gstatic.com", "https://cdnjs.cloudflare.com"],
+      },
+    },
+  })
+);
+
 app.use(helmet.crossOriginResourcePolicy({ policy: 'cross-origin' }));
 
 // 2. CORS Configuration (Crucial for Vanilla JS Fetch/XHR)
