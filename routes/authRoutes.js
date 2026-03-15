@@ -13,7 +13,7 @@ const loginLimiter = rateLimit({
   max: 5, // الحد الأقصى 5 محاولات لكل IP
   message: {
     status: 'error',
-    message: 'Too many login attempts from this IP, please try again after 15 minutes. 🚫'
+    message: 'Too many login attempts from this IP, please try again after 15 minutes'
   },
   // إعدادات Vercel Proxy لضمان قراءة الـ IP الحقيقي
   validate: {
