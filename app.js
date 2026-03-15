@@ -8,7 +8,7 @@ const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const mongoSanitize = require('express-mongo-sanitize');
 const hpp = require('hpp');
-const xss = require('xss-clean');
+const xss = require('xss');
 
 // Custom Modules
 const AppError = require('./utils/AppError');
@@ -25,7 +25,7 @@ const personalityRouter = require('./routes/personalityRoutes');
 const cvAnalyzerRoutes = require('./routes/cvAnalyzerRoutes');
 const app = express();
 // ============================================================
-// 💡 Vercel Proxy Fix: 
+// 💡 Vercel Proxy Fix:
 // ============================================================
 app.set('trust proxy', 1);
 
@@ -41,7 +41,7 @@ const allowedOrigins = [
   'https://careerpro.dev',
   'https://www.careerpro.dev',
   'https://careerpro.works',
-  'https://www.careerpro.works', 
+  'https://www.careerpro.works',
   'http://localhost:5173',
 ];
 
@@ -73,10 +73,10 @@ const limiter = rateLimit({
   message: 'Too many requests from this IP, please try again in an hour!',
   // 💡 إرجاع التحققات مع إيقاف التحذير الخاص بـ Vercel فقط
   validate: {
-    xForwardedForHeader: false, 
+    xForwardedForHeader: false,
     trustProxy: true,
-    default: true
-  }
+    default: true,
+  },
 });
 app.use('/api', limiter);
 
@@ -86,7 +86,27 @@ app.use(express.json({ limit: '10kb' }));
 // - Parses application/x-www-form-urlencoded (Standard HTML Forms & FormData)
 app.use(express.urlencoded({ extended: true, limit: '10kb' }));
 
-app.use(xss());
+// ============================================================
+// 🚨 CUSTOM XSS SANITIZER (The Fix for Getter-only Error)
+// ============================================================
+const cleanXssRecursive = (obj) => {
+  if (!obj) return;
+  for (const key in obj) {
+    if (typeof obj[key] === 'object' && obj[key] !== null) {
+      cleanXssRecursive(obj[key]); // تنظيف متداخل للمصفوفات والكائنات
+    } else if (typeof obj[key] === 'string') {
+      obj[key] = xss(obj[key]); // تنظيف النصوص الخبيثة
+    }
+  }
+};
+
+app.use((req, res, next) => {
+  if (req.body) cleanXssRecursive(req.body);
+  if (req.query) cleanXssRecursive(req.query);
+  if (req.params) cleanXssRecursive(req.params);
+  next();
+});
+// ============================================================
 // 6. CUSTOM NoSQL Injection Sanitizer (The Fix)
 // Bypasses the "getter-only" Express error by mutating keys instead of the object
 app.use((req, res, next) => {
@@ -112,18 +132,6 @@ app.use(hpp());
 // 8. Static File Serving
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-
-// ================= TEST XSS ROUTE (مؤقت) =================
-app.post('/api/v1/test-xss', (req, res) => {
-  // سنقوم بطباعة ما وصل للسيرفر (بعد التنظيف)
-  res.status(200).json({
-    status: 'success',
-    message: 'Data processed successfully',
-    sanitizedData: req.body // المفترض أن يرجع خالي من الأكواد الخبيثة
-  });
-});
-
-
 // Welcome Route
 app.get('/', (req, res) => {
   res.status(200).json({
@@ -141,15 +149,12 @@ app.use('/api/v1/companies', companyRouter);
 app.use('/api/v1/jobs', jobRouter);
 app.use('/api/v1/applications', applicationRouter);
 
-
 app.use('/api/v1/personality', personalityRouter);
 app.use('/api/v1/ai', cvAnalyzerRoutes);
 // ================= ERROR HANDLING =================
 app.all(/(.*)/, (req, res, next) => {
   next(new AppError(`Can't find ${req.originalUrl} on this server!`, 404));
 });
-
-
 
 app.use(globalErrorHandler);
 
