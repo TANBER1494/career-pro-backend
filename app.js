@@ -8,6 +8,7 @@ const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const mongoSanitize = require('express-mongo-sanitize');
 const hpp = require('hpp');
+const xss = require('xss-clean');
 
 // Custom Modules
 const AppError = require('./utils/AppError');
@@ -85,6 +86,7 @@ app.use(express.json({ limit: '10kb' }));
 // - Parses application/x-www-form-urlencoded (Standard HTML Forms & FormData)
 app.use(express.urlencoded({ extended: true, limit: '10kb' }));
 
+app.use(xss());
 // 6. CUSTOM NoSQL Injection Sanitizer (The Fix)
 // Bypasses the "getter-only" Express error by mutating keys instead of the object
 app.use((req, res, next) => {
@@ -109,6 +111,18 @@ app.use(hpp());
 
 // 8. Static File Serving
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
+
+// ================= TEST XSS ROUTE (مؤقت) =================
+app.post('/api/v1/test-xss', (req, res) => {
+  // سنقوم بطباعة ما وصل للسيرفر (بعد التنظيف)
+  res.status(200).json({
+    status: 'success',
+    message: 'Data processed successfully',
+    sanitizedData: req.body // المفترض أن يرجع خالي من الأكواد الخبيثة
+  });
+});
+
 
 // Welcome Route
 app.get('/', (req, res) => {
