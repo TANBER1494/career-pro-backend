@@ -14,6 +14,7 @@ const xss = require('xss');
 const AppError = require('./utils/AppError');
 const adminRouter = require('./routes/adminRoutes');
 const globalErrorHandler = require('./controllers/errorController');
+const analyticsMiddleware = require('./middlewares/analyticsMiddleware');
 
 // Import Routes
 const authRouter = require('./routes/authRoutes');
@@ -145,6 +146,10 @@ app.use(hpp());
 
 // 8. Static File Serving
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
+// 9. Vercel Web Analytics - Server-Side Event Tracking
+// Tracks API requests as custom events (requires Pro/Enterprise plan)
+app.use(analyticsMiddleware);
 
 // Welcome Route
 app.get('/', (req, res) => {
