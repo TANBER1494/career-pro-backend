@@ -48,6 +48,9 @@ exports.signup = catchAsync(async (req, res, next) => {
     companySize,
   } = req.body;
 
+  if (!['job_seeker', 'company'].includes(accountType)) {
+    return next(new AppError('Invalid account type. You can only register as a job_seeker or company.', 400));
+  }
   // 2. Check Passwords
   if (password !== passwordConfirm) {
     return next(new AppError('Passwords do not match', 400));
