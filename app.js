@@ -56,7 +56,7 @@ const allowedOrigins = [
   'https://www.careerpro.dev',
   'https://careerpro.works',
   'https://www.careerpro.works',
-  'http://localhost:5173',
+  'http://localhost:5174',
 ];
 
 app.use(
