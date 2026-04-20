@@ -5,6 +5,7 @@ const authMiddleware = require('../middlewares/authMiddleware');
 const router = express.Router();
 const applicationController = require('../controllers/applicationController');
 const authController = require('../controllers/authController');
+const jobMatchingController = require('../controllers/jobMatchingController');
 
 router.use(authMiddleware.protect);
 router.use(authMiddleware.restrictTo('job_seeker'));
@@ -30,4 +31,11 @@ router.get('/profile', jobSeekerController.getMe);
 router.get('/saved-jobs', jobSeekerController.getSavedJobs);
 router.get('/applications', applicationController.getSeekerApplications);
 router.delete('/applications/:appId', jobSeekerController.deleteApplication);
+
+
+// مسار الـ AI Matching (محمي أوتوماتيكياً بصلاحيات طالب العمل من أعلى الملف)
+router.get(
+  '/ai-matches',
+  jobMatchingController.generateMatches
+);
 module.exports = router;

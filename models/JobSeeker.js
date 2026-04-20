@@ -71,6 +71,16 @@ const jobSeekerSchema = new mongoose.Schema(
       type: String,
       trim: true,
     },
+    // --- AI Matching Requirements ---
+    cvUrl: {
+      type: String,
+      default: '', // سيتم تحديثه عند رفع الـ CV
+    },
+    expectedSalary: {
+      type: Number,
+      default: 0,
+    },
+    skills: [String],
 
     // --- Education ---
     degree: {

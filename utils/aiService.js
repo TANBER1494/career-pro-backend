@@ -5,7 +5,7 @@ class AiService {
  constructor() {
     this.client = axios.create({
       baseURL: process.env.AI_SERVICE_URL || 'http://127.0.0.1:5000',
-      timeout: 35000, 
+      timeout: 50000,
       headers: {
         'Content-Type': 'application/json',
         // 🚨 التعديل هنا: تمرير المفتاح السري في كل ريكويست
@@ -106,6 +106,35 @@ class AiService {
         errorMessage = "AI Model took too long to respond (Timeout).";
       }
       throw new AppError(errorMessage, 500); 
+    }
+  }
+
+  // ============================================================
+  // 🚀 AI Job Matcher (REAL AZURE MODE)
+  // ============================================================
+  async matchJobs(cvUrl, userProfile, jobsList) {
+    try {
+      console.log("🚀 [REAL MODE] Sending Matching Request to Azure...");
+      
+      const endpoint = 'https://careerpro-matcher-service-b2hpftg5gqcagfd9.swedencentral-01.azurewebsites.net/match';
+      
+      const payload = {
+        cv_url: cvUrl,
+        user_profile: userProfile,
+        jobs_list: jobsList
+      };
+
+      const response = await this._request('POST', endpoint, payload);
+
+      if (response.status === 'success' && response.data) {
+        return response.data; // هترجع الـ Array اللي فيها أفضل 5 وظائف
+      } else {
+        throw new Error("AI returned an invalid matching structure.");
+      }
+      
+    } catch (error) {
+      console.error("❌ Azure AI Matching Error:", error.message);
+      throw error;
     }
   }
 }
