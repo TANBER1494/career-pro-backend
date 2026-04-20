@@ -46,22 +46,31 @@ exports.analyzeCV = catchAsync(async (req, res, next) => {
   );
 
   try {
-    // 3. إرسال الداتا للذكاء الاصطناعي (AI Service)
+    // 1. إرسال الداتا للذكاء الاصطناعي
     const aiResponse = await aiService.analyzeCV(cvUrl, jobDescription);
 
-    // 4. تحديث السجل بنجاح العملية وحفظ النتيجة
+    // 2. تحديث سجل الطلب
     analysisRecord.requestStatus = 'completed';
     analysisRecord.responseData = aiResponse;
     analysisRecord.processedAt = Date.now();
     await analysisRecord.save();
-    await JobRecommendation.deleteMany({ seekerId: req.user.id });
-    // 5. إرسال النتيجة للفرونت إند (مُنسقة وجاهزة)
+
+    // 🚨 الحل هنا: جلب البروفايل أولاً للحصول على الـ ID الصحيح للـ Seeker
+    const seeker = await JobSeeker.findOne({ authId: req.user.id });
+    
+    if (seeker) {
+      // الآن نمسح باستخدام seeker._id الحقيقي وليس req.user.id
+      await JobRecommendation.deleteMany({ seekerId: seeker._id });
+      console.log(`🗑️ Old recommendations cleared for seeker: ${seeker._id}`);
+    }
+
+    // 3. إرسال النتيجة للفرونت إند
     res.status(200).json({
       status: 'success',
-      message: 'CV analyzed successfully by AI.',
+      message: 'CV analyzed successfully. Old matches cleared.',
       data: {
-        analysisId: analysisRecord._id, // نبعت الـ ID لو الفرونت حابب يرجع للنتيجة دي بعدين
-        result: aiResponse, // ده الـ JSON اللي جاي من Azure (ats_score, strengths, etc.)
+        analysisId: analysisRecord._id,
+        result: aiResponse,
       },
     });
   } catch (error) {
