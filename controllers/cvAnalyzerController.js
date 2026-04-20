@@ -46,24 +46,34 @@ exports.analyzeCV = catchAsync(async (req, res, next) => {
   );
 
   try {
-    // 3. إرسال الداتا للذكاء الاصطناعي (AI Service)
+    // 1. إرسال الداتا للذكاء الاصطناعي
     const aiResponse = await aiService.analyzeCV(cvUrl, jobDescription);
 
-    // 4. تحديث السجل بنجاح العملية وحفظ النتيجة
+    // 2. تحديث سجل الطلب بنجاح
     analysisRecord.requestStatus = 'completed';
     analysisRecord.responseData = aiResponse;
     analysisRecord.processedAt = Date.now();
     await analysisRecord.save();
-    await JobRecommendation.deleteMany({ seekerId: req.user.id });
-    // 5. إرسال النتيجة للفرونت إند (مُنسقة وجاهزة)
+
+    // 🚨 التصحيح السحري: جلب بروفايل طالب العمل أولاً للحصول على الـ _id الصحيح
+    const seekerProfile = await jobSeekerModel.findOne({ authId: req.user.id });
+
+    if (seekerProfile) {
+        // الآن نمسح باستخدام seekerProfile._id وليس req.user.id
+        await JobRecommendation.deleteMany({ seekerId: seekerProfile._id });
+        console.log(`🗑️ Cache cleared for Seeker: ${seekerProfile._id}`);
+    }
+
+    // 3. إرسال النتيجة للفرونت إند
     res.status(200).json({
       status: 'success',
-      message: 'CV analyzed successfully by AI.',
+      message: 'CV analyzed successfully. Old matches cleared.',
       data: {
-        analysisId: analysisRecord._id, // نبعت الـ ID لو الفرونت حابب يرجع للنتيجة دي بعدين
-        result: aiResponse, // ده الـ JSON اللي جاي من Azure (ats_score, strengths, etc.)
+        analysisId: analysisRecord._id,
+        result: aiResponse
       },
     });
+
   } catch (error) {
     // 🚨 6. معالجة الفشل بذكاء
     // لو الـ AI ضرب إيرور (Timeout أو غيره)، لازم نحدث السجل في الداتابيز عشان ميفضلش معلق
