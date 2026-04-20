@@ -2,8 +2,9 @@ const catchAsync = require('../utils/catchAsync');
 const AppError = require('../utils/AppError');
 const aiService = require('../utils/aiService');
 const AiAnalysisRequest = require('../models/AiAnalysisRequest');
+const JobSeeker = require('../models/JobSeeker');
 const JobRecommendation = require('../models/JobRecommendation');
-const jobSeekerModel = require('../models/JobSeeker');
+
 // ============================================================
 // 🚀 1. CV Analyzer & ATS Checker Controller
 // ============================================================
@@ -45,34 +46,24 @@ exports.analyzeCV = catchAsync(async (req, res, next) => {
   );
 
   try {
-    // 1. إرسال الداتا للذكاء الاصطناعي
+    // 3. إرسال الداتا للذكاء الاصطناعي (AI Service)
     const aiResponse = await aiService.analyzeCV(cvUrl, jobDescription);
 
-    // 2. تحديث سجل الطلب بنجاح
+    // 4. تحديث السجل بنجاح العملية وحفظ النتيجة
     analysisRecord.requestStatus = 'completed';
     analysisRecord.responseData = aiResponse;
     analysisRecord.processedAt = Date.now();
     await analysisRecord.save();
-
-    // 🚨 التصحيح السحري: جلب بروفايل طالب العمل أولاً للحصول على الـ _id الصحيح
-    const seekerProfile = await jobSeekerModel.findOne({ authId: req.user.id });
-
-    if (seekerProfile) {
-        // الآن نمسح باستخدام seekerProfile._id وليس req.user.id
-        await JobRecommendation.deleteMany({ seekerId: seekerProfile._id });
-        console.log(`🗑️ Cache cleared for Seeker: ${seekerProfile._id}`);
-    }
-
-    // 3. إرسال النتيجة للفرونت إند
+    await JobRecommendation.deleteMany({ seekerId: req.user.id });
+    // 5. إرسال النتيجة للفرونت إند (مُنسقة وجاهزة)
     res.status(200).json({
       status: 'success',
-      message: 'CV analyzed successfully. Old matches cleared.',
+      message: 'CV analyzed successfully by AI.',
       data: {
-        analysisId: analysisRecord._id,
-        result: aiResponse
+        analysisId: analysisRecord._id, // نبعت الـ ID لو الفرونت حابب يرجع للنتيجة دي بعدين
+        result: aiResponse, // ده الـ JSON اللي جاي من Azure (ats_score, strengths, etc.)
       },
     });
-
   } catch (error) {
     // 🚨 6. معالجة الفشل بذكاء
     // لو الـ AI ضرب إيرور (Timeout أو غيره)، لازم نحدث السجل في الداتابيز عشان ميفضلش معلق
