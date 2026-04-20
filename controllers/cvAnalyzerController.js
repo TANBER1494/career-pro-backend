@@ -2,9 +2,8 @@ const catchAsync = require('../utils/catchAsync');
 const AppError = require('../utils/AppError');
 const aiService = require('../utils/aiService');
 const AiAnalysisRequest = require('../models/AiAnalysisRequest');
-const JobSeeker = require('../models/JobSeeker');
 const JobRecommendation = require('../models/JobRecommendation');
-
+const jobSeekerModel = require('../models/JobSeeker');
 // ============================================================
 // 🚀 1. CV Analyzer & ATS Checker Controller
 // ============================================================
