@@ -9,7 +9,7 @@ exports.generateMatches = catchAsync(async (req, res, next) => {
  // 1. التحقق من وجود اليوزر والـ CV
   const seeker = await JobSeeker.findOne({ authId: req.user.id });
   if (!seeker || !seeker.cvUrl) {
-    return next(new AppError('Please upload your CV first.', 400));
+    return next(new AppError('Please analyze your CV first.', 400));
   }
 
   // 🚨 اللوجيك الجديد: البحث عن توصيات سابقة محفوظة لهذا المستخدم
