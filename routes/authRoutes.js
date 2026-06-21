@@ -23,6 +23,23 @@ const loginLimiter = rateLimit({
   }
 });
 
+// ============================================================
+//  Strict Security: Brute Force Protection for Password Update
+// ============================================================
+const passwordUpdateLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000, // حظر لمدة ساعة
+  max: 5, // الحد الأقصى 5 محاولات فاشلة
+  message: {
+    status: 'error',
+    message: 'Too many password update attempts. Please try again after an hour.'
+  },
+  validate: {
+    xForwardedForHeader: false, 
+    trustProxy: true,
+    default: true
+  }
+});
+
 
 router.post("/signup", authController.signup);
 router.post('/login', loginLimiter, authController.login);
@@ -45,5 +62,6 @@ router.get("/test-protect", authMiddleware.protect, (req, res) => {
 
 router.use(authMiddleware.protect);
 router.get("/me", authController.getMe);
+router.patch("/update-password", passwordUpdateLimiter, authController.updatePassword);
 
 module.exports = router;

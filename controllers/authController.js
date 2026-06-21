@@ -475,3 +475,54 @@ exports.resetPassword = catchAsync(async (req, res, next) => {
     },
   });
 });
+
+// ============================================================
+//  Update Password (For Logged In Users)
+// ============================================================
+exports.updatePassword = catchAsync(async (req, res, next) => {
+  // 1. استلام البيانات من المستخدم
+  const { currentPassword, password, passwordConfirm } = req.body;
+
+  if (!currentPassword || !password || !passwordConfirm) {
+    return next(new AppError('Please provide your current password, new password, and confirm new password.', 400));
+  }
+
+  // 2. جلب المستخدم من الداتابيز مع الباسورد (لأننا عاملين select: false في الموديل)
+  // req.user.id يأتي من الـ protect middleware
+  const user = await Authentication.findById(req.user.id).select('+password');
+
+  // 3.  التحقق من صحة كلمة المرور الحالية
+  if (!(await user.correctPassword(currentPassword, user.password))) {
+    return next(new AppError('Your current password is wrong. Please try again.', 401));
+  }
+
+  // 4.  منع استخدام نفس كلمة المرور القديمة
+  if (await user.correctPassword(password, user.password)) {
+    return next(new AppError('New password cannot be the same as your current password.', 400));
+  }
+
+  // 5.  التحقق من تطابق كلمتي المرور الجديدتين
+  if (password !== passwordConfirm) {
+    return next(new AppError('New passwords do not match.', 400));
+  }
+
+  // 6. تحديث كلمة المرور (الـ pre-save hook في الموديل سيقوم بتشفيرها تلقائياً)
+  user.password = password;
+  await user.save();
+
+  // 7. إصدار توكن جديد حتى لا يتم طرد المستخدم من النظام بعد التغيير
+  const token = signToken(user._id);
+
+  res.status(200).json({
+    status: 'success',
+    message: 'Password updated successfully!',
+    token,
+    data: {
+      user: {
+        id: user._id,
+        email: user.email,
+        accountType: user.accountType,
+      }
+    }
+  });
+});
